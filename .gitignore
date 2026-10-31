@@ -36,6 +36,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+!**/.env.example
 
 # vercel
 .vercel
@@ -43,3 +45,21 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dataset mentah & turunan (laporan kecil tetap dilacak)
+data/raw/
+data/interim/
+data/processed/
+!data/**/README.md
+
+# artefak model & venv python
+ml/artifacts/
+ml/.venv/
+__pycache__/
+.pytest_cache/
+
+# hasil prisma generate
+apps/api/src/generated/
+
+# scratch superpowers
+.superpowers/
