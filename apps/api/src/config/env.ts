@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 export type Env = {
   NODE_ENV: string;
   PORT: number;

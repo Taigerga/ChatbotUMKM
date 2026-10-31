@@ -142,7 +142,7 @@ export class ChatService {
         tenantId,
         conversationId,
         tool,
-        payload: { occurredAt: payload.occurredAt, items: payload.items, discount: payload.discount ?? 0, tax: payload.tax ?? 0, notes: payload.notes },
+        payload: { occurredAt: payload.occurredAt, items: payload.items, discount: payload.discount ?? 0, tax: payload.tax ?? 0, notes: payload.notes } as any,
         preview,
         expiresAt: new Date(Date.now() + ACTION_TTL_MS),
         idempotencyKey: randomUUID(),
