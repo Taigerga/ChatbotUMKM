@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Param, Post, UseGuards } from "@nestjs/common";
 import { CurrentTenant } from "../../common/current-tenant.decorator.js";
 import { CurrentUser } from "../../common/current-user.decorator.js";
 import { JwtAuthGuard, type AuthContext } from "../../common/jwt-auth.guard.js";
@@ -14,5 +14,15 @@ export class ChatController {
   @Post("messages")
   send(@CurrentUser() auth: AuthContext, @CurrentTenant() tenantId: string, @Body() dto: SendMessageDto) {
     return this.chat.send(tenantId, auth.userId, dto);
+  }
+
+  @Post("actions/:id/confirm")
+  confirm(@CurrentUser() auth: AuthContext, @CurrentTenant() tenantId: string, @Param("id") id: string) {
+    return this.chat.confirm(tenantId, auth.userId, id);
+  }
+
+  @Post("actions/:id/cancel")
+  cancel(@CurrentTenant() tenantId: string, @Param("id") id: string) {
+    return this.chat.cancel(tenantId, id);
   }
 }

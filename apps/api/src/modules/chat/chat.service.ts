@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+﻿import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { randomUUID } from "node:crypto";
@@ -58,8 +58,34 @@ export class ChatService {
     return { conversationId: conversation.id, reply };
   }
 
-  private async loadTurns(conversationId: string): Promise<ChatTurn[]> {
-    const messages = await this.prisma.chatMessage.findMany({
+  async confirm(tenantId: string, userId: string, actionId: string) {
+    const action = await this.prisma.pendingAction.findFirst({ where: { id: actionId, tenantId } });
+    if (!action) throw new NotFoundException({ code: "ACTION_NOT_FOUND", message: "Aksi tidak ditemukan" });
+    if (action.status === "executed") return { status: "executed", result: action.result };
+    if (action.status === "cancelled") throw new ConflictException({ code: "ACTION_CANCELLED", message: "Aksi sudah dibatalkan" });
+    if (action.status !== "proposed") throw new ConflictException({ code: "ACTION_NOT_PENDING", message: "Aksi tidak bisa dikonfirmasi" });
+    if (action.expiresAt.getTime() < Date.now()) {
+      throw new ConflictException({ code: "ACTION_EXPIRED", message: "Aksi sudah kedaluwarsa, minta ulang" });
+    }
+
+    const sale = await this.sales.create(tenantId, userId, action.payload as unknown as CreateSaleDto, {
+      idempotencyKey: action.id,
+      source: "chat",
+    });
+    const result = { saleId: sale.id, total: Number(sale.total).toFixed(2) };
+    await this.prisma.pendingAction.update({ where: { id: action.id }, data: { status: "executed", executedAt: new Date(), result } });
+    return { status: "executed", result };
+  }
+
+  async cancel(tenantId: string, actionId: string) {
+    const action = await this.prisma.pendingAction.findFirst({ where: { id: actionId, tenantId } });
+    if (!action) throw new NotFoundException({ code: "ACTION_NOT_FOUND", message: "Aksi tidak ditemukan" });
+    if (action.status === "executed") throw new ConflictException({ code: "ACTION_EXECUTED", message: "Aksi sudah dijalankan" });
+    await this.prisma.pendingAction.update({ where: { id: action.id }, data: { status: "cancelled" } });
+    return { status: "cancelled" };
+  }
+
+  private async loadTurns(conversationId: string): Promise<ChatTurn[]> {    const messages = await this.prisma.chatMessage.findMany({
       where: { conversationId, role: { in: ["user", "assistant"] } },
       orderBy: { createdAt: "desc" },
       take: 12,
