@@ -9,5 +9,3 @@ import { ProductsService } from "./products.service.js";
   exports: [ProductsService],
 })
 export class ProductsModule {}
-EOF
-echo done

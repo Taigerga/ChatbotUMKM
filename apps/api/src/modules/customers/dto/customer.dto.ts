@@ -33,5 +33,3 @@ export class UpdateCustomerDto {
   @IsEmail()
   email?: string;
 }
-EOF
-echo done

@@ -12,7 +12,7 @@ export class ImportsController {
 
   @Post("preview")
   @UseInterceptors(FileInterceptor("file"))
-  preview(@CurrentTenant() tenantId: string, @UploadedFile() file: Express.Multer.File, @Body("entity") entity: string) {
+  preview(@CurrentTenant() tenantId: string, @UploadedFile() file: any, @Body("entity") entity: string) {
     if (!file) throw new BadRequestException({ code: "FILE_REQUIRED", message: "File CSV wajib diunggah" });
     const records = this.imports.parseFile(file.buffer);
     if (entity === "products") return this.imports.previewProducts(tenantId, records);
@@ -27,5 +27,3 @@ export class ImportsController {
     throw new BadRequestException({ code: "ENTITY_UNKNOWN", message: "Jenis data tidak dikenal" });
   }
 }
-EOF
-echo done

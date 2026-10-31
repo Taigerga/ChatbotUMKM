@@ -14,5 +14,3 @@ export class OverviewController {
     return this.overview.summary(tenantId, from, to);
   }
 }
-EOF
-echo done

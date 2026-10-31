@@ -63,5 +63,3 @@ export class ProductsService {
     return { ok: true };
   }
 }
-EOF
-echo done

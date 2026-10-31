@@ -1,7 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { CurrentTenant } from "../../common/current-tenant.decorator.js";
-import { CurrentUser } from "../../common/current-user.decorator.js";
-import { JwtAuthGuard, type AuthContext } from "../../common/jwt-auth.guard.js";
+import { JwtAuthGuard } from "../../common/jwt-auth.guard.js";
 import { TenantGuard } from "../../common/tenant.guard.js";
 import { ProductsService } from "./products.service.js";
 import { CreateProductDto, UpdateProductDto } from "./dto/product.dto.js";
@@ -36,5 +35,3 @@ export class ProductsController {
     return this.products.remove(tenantId, id);
   }
 }
-EOF
-echo done

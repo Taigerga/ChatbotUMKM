@@ -10,9 +10,15 @@ export class OverviewService {
     const endDate = to ? new Date(to) : new Date();
     const sales = await this.prisma.sale.findMany({
       where: { tenantId, occurredAt: { gte: startDate, lte: endDate } },
-      include: { items: true, customer: { select: { name: true } } },
+      include: { items: true },
       orderBy: { occurredAt: "asc" },
     });
+
+    const customerIds = Array.from(new Set(sales.map((s) => s.customerId).filter((id): id is string => Boolean(id))));
+    const customers = customerIds.length
+      ? await this.prisma.customer.findMany({ where: { tenantId, id: { in: customerIds } }, select: { id: true, name: true } })
+      : [];
+    const customerName = new Map(customers.map((c) => [c.id, c.name]));
 
     const total = sales.reduce((sum, s) => sum + Number(s.total), 0);
     const subtotal = sales.reduce((sum, s) => sum + Number(s.subtotal), 0);
@@ -43,7 +49,7 @@ export class OverviewService {
     const customerMap = new Map<string, { name: string; total: number; count: number }>();
     for (const sale of sales) {
       const key = sale.customerId ?? "walk-in";
-      const name = sale.customer?.name ?? "Tanpa pelanggan";
+      const name = customerName.get(sale.customerId ?? "") ?? "Tanpa pelanggan";
       const current = customerMap.get(key) ?? { name, total: 0, count: 0 };
       current.total += Number(sale.total);
       current.count += 1;
@@ -68,5 +74,3 @@ export class OverviewService {
     };
   }
 }
-EOF
-echo done

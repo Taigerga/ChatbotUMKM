@@ -9,5 +9,3 @@ import { CustomersService } from "./customers.service.js";
   exports: [CustomersService],
 })
 export class CustomersModule {}
-EOF
-echo done

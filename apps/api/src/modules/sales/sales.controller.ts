@@ -36,6 +36,8 @@ export class SalesController {
   remove(@CurrentUser() auth: AuthContext, @CurrentTenant() tenantId: string, @Param("id") id: string) {
     return this.sales.remove(tenantId, auth.userId, id);
   }
+  @Get()
+  async list(
     @CurrentTenant() tenantId: string,
     @Query("from") from?: string,
     @Query("to") to?: string,

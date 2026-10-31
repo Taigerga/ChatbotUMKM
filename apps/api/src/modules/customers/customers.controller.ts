@@ -35,5 +35,3 @@ export class CustomersController {
     return this.customers.remove(tenantId, id);
   }
 }
-EOF
-echo done

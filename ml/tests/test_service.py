@@ -1,0 +1,22 @@
+import os
+from fastapi.testclient import TestClient
+
+os.environ.setdefault("DATA_DIR", os.path.join(os.path.dirname(__file__), "..", "..", "data"))
+os.environ.setdefault("ARTIFACT_DIR", os.path.join(os.path.dirname(__file__), "..", "artifacts_test"))
+os.environ.setdefault("ML_INTERNAL_TOKEN", "")
+
+from src.service import app
+
+client = TestClient(app)
+
+
+def test_health():
+    res = client.get("/health")
+    assert res.status_code == 200
+    assert res.json()["status"] == "ok"
+
+
+def test_readiness_shape():
+    res = client.get("/readiness")
+    assert res.status_code == 200
+    assert "models" in res.json()

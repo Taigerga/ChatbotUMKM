@@ -164,6 +164,7 @@ export class SalesService {
     });
     return { ok: true };
   }
+  async list(tenantId: string, query: SaleListQuery) {
     const limit = Math.min(Math.max(Number.isFinite(query.limit) ? (query.limit as number) : 20, 1), 100);
     const offset = Math.max(Number.isFinite(query.offset) ? (query.offset as number) : 0, 0);
     const from = query.from ? new Date(query.from) : undefined;

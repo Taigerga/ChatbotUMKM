@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { parse } from "csv-parse/sync";
 import { PrismaService } from "../../prisma/prisma.service.js";
 
@@ -100,5 +100,3 @@ export class ImportsService {
     return { inserted, skipped };
   }
 }
-EOF
-echo done

@@ -8,5 +8,3 @@ import { ImportsService } from "./imports.service.js";
   providers: [ImportsService, TenantGuard],
 })
 export class ImportsModule {}
-EOF
-echo done

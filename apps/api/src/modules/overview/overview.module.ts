@@ -9,5 +9,3 @@ import { OverviewService } from "./overview.service.js";
   exports: [OverviewService],
 })
 export class OverviewModule {}
-EOF
-echo done
