@@ -1,0 +1,114 @@
+# Matriks Kecocokan Kolom x Model
+
+Status: `dipakai` / `opsional` / `tidak_dipakai` / `berisiko_leakage`.
+
+## Ringkasan keputusan per file
+
+| File | Keputusan | Model yang dilayani |
+|---|---|---|
+| ecommerce_sales_customer_analytics_150k | dipakai sebagian | forecasting, RFM+K-Means, churn, anomaly |
+| order_items | dipakai sebagian | market basket |
+| product_catalog | dipakai sebagian | market basket (kunci + kategori) |
+| customer_master | hanya referensi/validasi | profil pelanggan; transaksi tetap sumber utama |
+| dataset_statistics | tidak dipakai | ringkasan agregat 1 baris, bukan observasi |
+
+## Matriks
+
+| File | Kolom | forecasting | rfm_kmeans | market_basket | churn | anomaly | Alasan |
+|---|---|---|---|---|---|---|---|
+| customer_master | customer_id | tidak_dipakai | opsional | tidak_dipakai | opsional | tidak_dipakai | atribut profil pelanggan; RFM memakai transaksi |
+| customer_master | customer_name | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| customer_master | customer_age | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| customer_master | gender | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| customer_master | customer_segment | tidak_dipakai | opsional | tidak_dipakai | opsional | tidak_dipakai | atribut profil pelanggan; RFM memakai transaksi |
+| customer_master | customer_city | tidak_dipakai | opsional | tidak_dipakai | opsional | tidak_dipakai | atribut profil pelanggan; RFM memakai transaksi |
+| customer_master | customer_state | tidak_dipakai | opsional | tidak_dipakai | opsional | tidak_dipakai | atribut profil pelanggan; RFM memakai transaksi |
+| customer_master | customer_country | tidak_dipakai | opsional | tidak_dipakai | opsional | tidak_dipakai | atribut profil pelanggan; RFM memakai transaksi |
+| customer_master | region | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| customer_master | customer_postal_code | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| customer_master | customer_acquisition_cost | tidak_dipakai | tidak_dipakai | tidak_dipakai | opsional | tidak_dipakai | biaya akuisisi bisa jadi fitur risiko, bukan label |
+| dataset_statistics | Total Transactions | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| dataset_statistics | Total Columns | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| dataset_statistics | Total Customers | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| dataset_statistics | Total Products Used | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| dataset_statistics | Date Range | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| dataset_statistics | Total Revenue | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| dataset_statistics | Total Profit | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| dataset_statistics | Average Order Value | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| dataset_statistics | Average Rating | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| dataset_statistics | Return Rate | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| dataset_statistics | Cancellation Rate | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| ecommerce_sales_customer_analytics_150k | order_id | opsional | tidak_dipakai | opsional | tidak_dipakai | tidak_dipakai | kunci transaksi; item per order ada di order_items |
+| ecommerce_sales_customer_analytics_150k | order_date | dipakai | dipakai | tidak_dipakai | dipakai | dipakai | tanggal + nilai penjualan bersih: inti seri waktu dan RFM |
+| ecommerce_sales_customer_analytics_150k | order_time | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | order_status | opsional | tidak_dipakai | tidak_dipakai | tidak_dipakai | opsional | penjelas anomali operasional, bukan fitur inti |
+| ecommerce_sales_customer_analytics_150k | sales_channel | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | customer_id | tidak_dipakai | dipakai | tidak_dipakai | dipakai | tidak_dipakai | kunci pelanggan untuk RFM dan churn |
+| ecommerce_sales_customer_analytics_150k | customer_name | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | customer_age | tidak_dipakai | opsional | tidak_dipakai | opsional | tidak_dipakai | atribut pelanggan untuk profil cluster dan fitur churn |
+| ecommerce_sales_customer_analytics_150k | gender | tidak_dipakai | opsional | tidak_dipakai | opsional | tidak_dipakai | atribut pelanggan untuk profil cluster dan fitur churn |
+| ecommerce_sales_customer_analytics_150k | customer_segment | tidak_dipakai | opsional | tidak_dipakai | opsional | tidak_dipakai | atribut pelanggan untuk profil cluster dan fitur churn |
+| ecommerce_sales_customer_analytics_150k | customer_type | tidak_dipakai | opsional | tidak_dipakai | opsional | tidak_dipakai | atribut pelanggan untuk profil cluster dan fitur churn |
+| ecommerce_sales_customer_analytics_150k | customer_city | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | customer_state | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | customer_country | tidak_dipakai | opsional | tidak_dipakai | opsional | tidak_dipakai | atribut pelanggan untuk profil cluster dan fitur churn |
+| ecommerce_sales_customer_analytics_150k | region | tidak_dipakai | opsional | tidak_dipakai | opsional | tidak_dipakai | atribut pelanggan untuk profil cluster dan fitur churn |
+| ecommerce_sales_customer_analytics_150k | customer_postal_code | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | payment_method | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | payment_status | opsional | tidak_dipakai | tidak_dipakai | tidak_dipakai | opsional | penjelas anomali operasional, bukan fitur inti |
+| ecommerce_sales_customer_analytics_150k | currency | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | shipping_method | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | warehouse | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | delivery_days | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | estimated_delivery_days | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | delivery_status | opsional | tidak_dipakai | tidak_dipakai | tidak_dipakai | opsional | penjelas anomali operasional, bukan fitur inti |
+| ecommerce_sales_customer_analytics_150k | return_status | opsional | tidak_dipakai | tidak_dipakai | tidak_dipakai | opsional | penjelas anomali operasional, bukan fitur inti |
+| ecommerce_sales_customer_analytics_150k | return_reason | opsional | tidak_dipakai | tidak_dipakai | tidak_dipakai | opsional | penjelas anomali operasional, bukan fitur inti |
+| ecommerce_sales_customer_analytics_150k | customer_rating | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | review_sentiment | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | customer_review | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | marketing_channel | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | campaign_name | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | coupon_code | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | loyalty_points_earned | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | loyalty_points_redeemed | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | quantity | opsional | tidak_dipakai | tidak_dipakai | tidak_dipakai | dipakai | volume item per order untuk deteksi anomali volume |
+| ecommerce_sales_customer_analytics_150k | gross_sales | opsional | tidak_dipakai | tidak_dipakai | tidak_dipakai | opsional | komponen nilai; net_sales sudah mewakili |
+| ecommerce_sales_customer_analytics_150k | discount_amount | opsional | tidak_dipakai | tidak_dipakai | tidak_dipakai | opsional | komponen nilai; net_sales sudah mewakili |
+| ecommerce_sales_customer_analytics_150k | tax_amount | opsional | tidak_dipakai | tidak_dipakai | tidak_dipakai | opsional | komponen nilai; net_sales sudah mewakili |
+| ecommerce_sales_customer_analytics_150k | shipping_cost | opsional | tidak_dipakai | tidak_dipakai | tidak_dipakai | opsional | komponen nilai; net_sales sudah mewakili |
+| ecommerce_sales_customer_analytics_150k | net_sales | dipakai | dipakai | tidak_dipakai | dipakai | dipakai | tanggal + nilai penjualan bersih: inti seri waktu dan RFM |
+| ecommerce_sales_customer_analytics_150k | product_cost | opsional | tidak_dipakai | tidak_dipakai | tidak_dipakai | opsional | komponen nilai; net_sales sudah mewakili |
+| ecommerce_sales_customer_analytics_150k | profit | opsional | tidak_dipakai | tidak_dipakai | tidak_dipakai | opsional | komponen nilai; net_sales sudah mewakili |
+| ecommerce_sales_customer_analytics_150k | profit_margin_percentage | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak menambah sinyal untuk model yang dipilih |
+| ecommerce_sales_customer_analytics_150k | customer_lifetime_value | berisiko_leakage | berisiko_leakage | berisiko_leakage | berisiko_leakage | berisiko_leakage | dihitung dari seluruh histori termasuk masa depan label churn |
+| ecommerce_sales_customer_analytics_150k | is_repeat_customer | berisiko_leakage | berisiko_leakage | berisiko_leakage | berisiko_leakage | berisiko_leakage | dihitung dari seluruh histori termasuk masa depan label churn |
+| ecommerce_sales_customer_analytics_150k | customer_order_count | berisiko_leakage | berisiko_leakage | berisiko_leakage | berisiko_leakage | berisiko_leakage | dihitung dari seluruh histori termasuk masa depan label churn |
+| order_items | order_id | tidak_dipakai | tidak_dipakai | dipakai | tidak_dipakai | tidak_dipakai | kunci transaksi untuk keranjang |
+| order_items | product_id | tidak_dipakai | tidak_dipakai | dipakai | tidak_dipakai | tidak_dipakai | item yang dibeli per transaksi |
+| order_items | quantity | tidak_dipakai | tidak_dipakai | opsional | tidak_dipakai | tidak_dipakai | bobot kuantitas, Apriori biner |
+| order_items | unit_price | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| order_items | discount_percentage | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| order_items | discount_amount | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| order_items | gross_sales | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| order_items | tax_amount | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| order_items | shipping_cost | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| order_items | net_sales | tidak_dipakai | tidak_dipakai | opsional | tidak_dipakai | tidak_dipakai | nilai item, bukan kebutuhan asosiasi |
+| order_items | product_cost | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| order_items | profit | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| product_catalog | product_id | tidak_dipakai | tidak_dipakai | dipakai | tidak_dipakai | tidak_dipakai | kunci produk |
+| product_catalog | product_name | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| product_catalog | product_category | tidak_dipakai | tidak_dipakai | opsional | tidak_dipakai | tidak_dipakai | memungkinkan aturan tingkat kategori |
+| product_catalog | product_subcategory | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| product_catalog | brand | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| product_catalog | supplier | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| product_catalog | unit_price | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | harga tidak dipakai Apriori |
+| product_catalog | product_cost | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+| product_catalog | product_rating | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak_dipakai | tidak relevan untuk kelima model |
+
+## Catatan
+
+- `customer_lifetime_value`, `customer_order_count`, `is_repeat_customer` dihitung dari seluruh histori
+  dan tidak boleh menjadi fitur churn (data leakage).
+- `dataset_statistics.csv` hanya ringkasan agregat; tidak pernah dipakai sebagai data training.
+- Persetujuan matriks ini wajib sebelum preprocessing/training.
