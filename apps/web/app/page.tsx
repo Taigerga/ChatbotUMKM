@@ -1,19 +1,28 @@
-import { Button } from "@workspace/ui/components/button"
+"use client";
 
-export default function Page() {
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { apiFetch, setTenantId } from "@/lib/api";
+
+type MeResponse = { user: { id: string }; tenants: { id: string }[] };
+
+export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    apiFetch<MeResponse>("/auth/me")
+      .then((me) => {
+        const tenant = me.tenants[0];
+        if (!tenant) return router.replace("/login");
+        setTenantId(tenant.id);
+        router.replace("/chat");
+      })
+      .catch(() => router.replace("/login"));
+  }, [router]);
+
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
-        </div>
-        <div className="text-muted-foreground font-mono text-xs">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
-      </div>
-    </div>
-  )
+    <main className="text-muted-foreground flex min-h-svh items-center justify-center text-sm">
+      Memuat…
+    </main>
+  );
 }
