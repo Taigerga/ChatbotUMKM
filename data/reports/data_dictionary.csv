@@ -1,0 +1,90 @@
+file,column,dtype,non_null,nullable_pct,unique,min,max,sample,suspected_role
+customer_master,customer_id,str,25000,0.0,25000,CUST-000001,CUST-025000,CUST-000001 | CUST-000002 | CUST-000003,id
+customer_master,customer_name,str,25000,0.0,21631,Aaron Adams,Zoe Stanley,Donna Miller | Joseph James | Daniel Smith,atribut
+customer_master,customer_age,int64,25000,0.0,57,18,74,54 | 61 | 47,atribut
+customer_master,gender,str,25000,0.0,3,Female,Non-Binary,Female | Male | Non-Binary,atribut
+customer_master,customer_segment,str,25000,0.0,4,Business,VIP,Consumer | VIP | Premium,atribut
+customer_master,customer_city,str,25000,0.0,15555,Aaronberg,Zunigatown,Laurenland | Lake Peter | Seanview,atribut
+customer_master,customer_state,str,25000,0.0,38,Abu Dhabi,Western Australia,Dubai | Lower Saxony | North Rhine,atribut
+customer_master,customer_country,str,25000,0.0,7,Australia,USA,UAE | Germany | USA,atribut
+customer_master,region,str,25000,0.0,5,Central,West,South | North | West,atribut
+customer_master,customer_postal_code,int64,25000,0.0,22183,516,99950,11253 | 47778 | 13900,atribut
+customer_master,customer_acquisition_cost,float64,25000,0.0,7215,5.01,79.99,13.58 | 27.45 | 31.53,nilai_uang
+dataset_statistics,Total Transactions,int64,1,0.0,1,138116,138116,138116,atribut
+dataset_statistics,Total Columns,int64,1,0.0,1,46,46,46,atribut
+dataset_statistics,Total Customers,int64,1,0.0,1,24911,24911,24911,atribut
+dataset_statistics,Total Products Used,int64,1,0.0,1,138116,138116,138116,atribut
+dataset_statistics,Date Range,str,1,0.0,1,2021-01-01 to 2025-12-31,2021-01-01 to 2025-12-31,2021-01-01 to 2025-12-31,tanggal
+dataset_statistics,Total Revenue,str,1,0.0,1,"$177,134,263.74","$177,134,263.74","$177,134,263.74",nilai_uang
+dataset_statistics,Total Profit,str,1,0.0,1,"$76,146,395.76","$76,146,395.76","$76,146,395.76",nilai_uang
+dataset_statistics,Average Order Value,str,1,0.0,1,"$1,282.50","$1,282.50","$1,282.50",nilai_uang
+dataset_statistics,Average Rating,float64,1,0.0,1,3.68,3.68,3.68,nilai_uang
+dataset_statistics,Return Rate,str,1,0.0,1,6.85%,6.85%,6.85%,atribut
+dataset_statistics,Cancellation Rate,str,1,0.0,1,6.08%,6.08%,6.08%,atribut
+ecommerce_sales_customer_analytics_150k,order_id,str,138116,0.0,138116,ORD-100002,ORD-999984,ORD-301242 | ORD-773460 | ORD-449374,id
+ecommerce_sales_customer_analytics_150k,order_date,str,138116,0.0,1826,2021-01-01,2025-12-31,2023-11-06 | 2025-12-24 | 2021-07-05,tanggal
+ecommerce_sales_customer_analytics_150k,order_time,str,138116,0.0,68991,00:00:00,23:59:59,16:37:47 | 01:22:36 | 14:24:21,atribut
+ecommerce_sales_customer_analytics_150k,order_status,str,138116,0.0,4,Cancelled,Returned,Completed | Pending | Cancelled,atribut
+ecommerce_sales_customer_analytics_150k,sales_channel,str,138116,0.0,4,Marketplace,Website,Mobile App | Website | Social Media,nilai_uang
+ecommerce_sales_customer_analytics_150k,customer_id,str,138116,0.0,24911,CUST-000001,CUST-025000,CUST-003102 | CUST-003124 | CUST-012496,id
+ecommerce_sales_customer_analytics_150k,customer_name,str,138116,0.0,21564,Aaron Adams,Zoe Stanley,Jasmine Ryan | Scott Chase | Marc Wheeler,atribut
+ecommerce_sales_customer_analytics_150k,customer_age,int64,138116,0.0,57,18,74,55 | 26 | 69,atribut
+ecommerce_sales_customer_analytics_150k,gender,str,138116,0.0,3,Female,Non-Binary,Male | Female | Non-Binary,atribut
+ecommerce_sales_customer_analytics_150k,customer_segment,str,138116,0.0,4,Business,VIP,Consumer | Premium | VIP,atribut
+ecommerce_sales_customer_analytics_150k,customer_type,str,138116,0.0,3,Loyal,Returning,Loyal | Returning | New,atribut
+ecommerce_sales_customer_analytics_150k,customer_city,str,138116,0.0,15516,Aaronberg,Zunigatown,Lake Williamberg | Kristyport | Singletonhaven,atribut
+ecommerce_sales_customer_analytics_150k,customer_state,str,138116,0.0,38,Abu Dhabi,Western Australia,Texas | Baden-Württemberg | New York,atribut
+ecommerce_sales_customer_analytics_150k,customer_country,str,138116,0.0,7,Australia,USA,USA | Germany | India,atribut
+ecommerce_sales_customer_analytics_150k,region,str,138116,0.0,5,Central,West,South | East | West,atribut
+ecommerce_sales_customer_analytics_150k,customer_postal_code,int64,138116,0.0,22117,516,99950,86040 | 62538 | 19993,atribut
+ecommerce_sales_customer_analytics_150k,payment_method,str,138116,0.0,7,Bank Transfer,PayPal,Digital Wallet | Debit Card | Cash on Delivery,atribut
+ecommerce_sales_customer_analytics_150k,payment_status,str,138116,0.0,4,Failed,Refunded,Paid | Pending | Failed,atribut
+ecommerce_sales_customer_analytics_150k,currency,str,138116,0.0,7,AED,USD,USD | EUR | INR,atribut
+ecommerce_sales_customer_analytics_150k,shipping_method,str,138116,0.0,4,Economy,Standard,Standard | Economy | Express,atribut
+ecommerce_sales_customer_analytics_150k,warehouse,str,138116,0.0,19,WH-001,WH-019,WH-003 | WH-005 | WH-015,atribut
+ecommerce_sales_customer_analytics_150k,delivery_days,float64,113559,17.78,15,0.0,14.0,3.0 | 10.0 | 2.0,atribut
+ecommerce_sales_customer_analytics_150k,estimated_delivery_days,float64,113559,17.78,11,0.0,10.0,3.0 | 10.0 | 2.0,atribut
+ecommerce_sales_customer_analytics_150k,delivery_status,str,138116,0.0,4,Cancelled,On Time,On Time | Delayed | Cancelled,atribut
+ecommerce_sales_customer_analytics_150k,return_status,str,9462,93.15,1,Returned,Returned,Returned,atribut
+ecommerce_sales_customer_analytics_150k,return_reason,str,9462,93.15,8,Changed Mind,Wrong Product,Wrong Product | Defective Product | Size Issue,atribut
+ecommerce_sales_customer_analytics_150k,customer_rating,float64,113559,17.78,35,1.6,5.0,3.5 | 3.6 | 4.3,nilai_uang
+ecommerce_sales_customer_analytics_150k,review_sentiment,str,113559,17.78,3,Negative,Positive,Positive | Neutral | Negative,atribut
+ecommerce_sales_customer_analytics_150k,customer_review,str,113559,17.78,25,Absolutely love this product! Exceeded all expectations.,Waste of money. Very dissatisfied.,Satisfied with the purchase. | Good value for money. | Good product. Works as expected.,atribut
+ecommerce_sales_customer_analytics_150k,marketing_channel,str,138116,0.0,10,Affiliate,YouTube,Direct | YouTube | Email Marketing,atribut
+ecommerce_sales_customer_analytics_150k,campaign_name,str,54883,60.26,17,Abandoned_Cart,Weekly_Newsletter,Default_Campaign | Friend_Invite | Google_Shopping,atribut
+ecommerce_sales_customer_analytics_150k,coupon_code,str,27614,80.01,40,SAVE10,SAVE49,SAVE31 | SAVE15 | SAVE30,atribut
+ecommerce_sales_customer_analytics_150k,loyalty_points_earned,int64,138116,0.0,846,0,1621,94 | 201 | 46,atribut
+ecommerce_sales_customer_analytics_150k,loyalty_points_redeemed,int64,138116,0.0,642,0,1063,44 | 171 | 16,atribut
+ecommerce_sales_customer_analytics_150k,quantity,int64,138116,0.0,24,1,24,5 | 8 | 2,kuantitas
+ecommerce_sales_customer_analytics_150k,gross_sales,float64,138116,0.0,102538,6.31,16051.189999999999,1350.19 | 3144.64 | 522.81,nilai_uang
+ecommerce_sales_customer_analytics_150k,discount_amount,float64,138116,0.0,64513,0.0,6759.02,477.89 | 1456.0600000000002 | 97.3,nilai_uang
+ecommerce_sales_customer_analytics_150k,tax_amount,float64,138116,0.0,49921,0.34,2091.52,61.07 | 320.83 | 29.79,nilai_uang
+ecommerce_sales_customer_analytics_150k,shipping_cost,float64,138116,0.0,14857,0.0,149.52,12.030000000000001 | 9.0 | 13.05,nilai_uang
+ecommerce_sales_customer_analytics_150k,net_sales,float64,138116,0.0,115457,5.8,16218.0,945.4 | 2018.4099999999999 | 468.35,nilai_uang
+ecommerce_sales_customer_analytics_150k,product_cost,float64,138116,0.0,92646,1.97,9963.41,588.33 | 2031.88 | 257.73,nilai_uang
+ecommerce_sales_customer_analytics_150k,profit,float64,138116,0.0,96545,-1281.5900000000001,7083.68,345.03999999999996 | -22.470000000000006 | 197.57,nilai_uang
+ecommerce_sales_customer_analytics_150k,profit_margin_percentage,float64,138116,0.0,7947,-59.55,77.59,36.5 | -1.11 | 42.18,nilai_uang
+ecommerce_sales_customer_analytics_150k,customer_lifetime_value,float64,138116,0.0,24769,22.55,30268.44,12459.68 | 13032.480000000001 | 6159.4400000000005,nilai_uang
+ecommerce_sales_customer_analytics_150k,is_repeat_customer,bool,138116,0.0,2,False,True,True | False,atribut
+ecommerce_sales_customer_analytics_150k,customer_order_count,int64,138116,0.0,19,1,20,11 | 6 | 7,atribut
+order_items,order_id,str,397569,0.0,138116,ORD-100002,ORD-999984,ORD-301242 | ORD-773460 | ORD-449374,id
+order_items,product_id,str,397569,0.0,1175,PROD-000001,PROD-001175,PROD-000738 | PROD-000181 | PROD-000973,id
+order_items,quantity,int64,397569,0.0,5,1,5,2 | 3 | 4,kuantitas
+order_items,unit_price,float64,397569,0.0,1164,6.31,1482.95,244.4 | 287.13 | 754.8,nilai_uang
+order_items,discount_percentage,float64,397569,0.0,343634,0.0,0.6,0.33960729091410474 | 0.3620758795418163 | 0.4682995743617819,atribut
+order_items,discount_amount,float64,397569,0.0,50505,0.0,3857.67,166.0 | 311.89 | 1413.89,nilai_uang
+order_items,gross_sales,float64,397569,0.0,5724,6.31,7414.75,488.8 | 861.39 | 3019.2,nilai_uang
+order_items,tax_amount,float64,397569,0.0,29348,0.26,1482.95,22.6 | 38.47 | 305.01,nilai_uang
+order_items,shipping_cost,float64,397569,0.0,2948,0.0,36.46,6.48 | 5.55 | 9.0,nilai_uang
+order_items,net_sales,float64,397569,0.0,125944,5.35,8897.7,351.88 | 593.52 | 1919.32,nilai_uang
+order_items,product_cost,float64,397569,0.0,5516,1.97,4968.15,173.28 | 415.05 | 1976.16,nilai_uang
+order_items,profit,float64,397569,0.0,78190,-1260.28,4045.1,172.12 | 172.92 | -65.84,nilai_uang
+product_catalog,product_id,str,1175,0.0,1175,PROD-000001,PROD-001175,PROD-000001 | PROD-000002 | PROD-000003,id
+product_catalog,product_name,str,1175,0.0,1175,3M Business-focused well-modulated ability Office Furniture,Zara Synchronized dedicated hierarchy Bags,Apple Sharable bifurcated algorithm Smartphones | Google User-centric even-keeled encryption Smartphones | LG Face-to-face client-driven support Smartphones,atribut
+product_catalog,product_category,str,1175,0.0,15,Automotive,Toys & Games,Electronics | Home Appliances | Fashion,atribut
+product_catalog,product_subcategory,str,1175,0.0,117,Academic,Yoga,Smartphones | Laptops | Tablets,atribut
+product_catalog,brand,str,1175,0.0,144,3M,Zara,Apple | Google | LG,atribut
+product_catalog,supplier,str,1175,0.0,10,Alibaba,Pacific Trade,Alibaba | Euro Logistics | Asian Manufacturing,atribut
+product_catalog,unit_price,float64,1175,0.0,1164,6.31,1482.95,686.9 | 978.26 | 275.51,nilai_uang
+product_catalog,product_cost,float64,1175,0.0,1147,1.97,993.63,474.06 | 519.66 | 185.48,nilai_uang
+product_catalog,product_rating,float64,1175,0.0,25,2.5,4.9,4.3 | 2.9 | 3.9,nilai_uang
