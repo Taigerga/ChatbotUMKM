@@ -22,7 +22,7 @@ export class ChatController {
   }
 
   @Post("actions/:id/cancel")
-  cancel(@CurrentTenant() tenantId: string, @Param("id") id: string) {
-    return this.chat.cancel(tenantId, id);
+  cancel(@CurrentUser() auth: AuthContext, @CurrentTenant() tenantId: string, @Param("id") id: string) {
+    return this.chat.cancel(tenantId, auth.userId, id);
   }
 }

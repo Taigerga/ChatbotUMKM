@@ -12,6 +12,7 @@ export class SalesService {
   validate(dto: CreateSaleDto): string[] {
     const errors: string[] = [];
     if (!dto.items?.length) errors.push("Minimal satu item penjualan");
+    if (Number.isNaN(new Date(dto.occurredAt).getTime())) errors.push("Tanggal transaksi tidak valid");
     for (const item of dto.items ?? []) {
       if (!item.description?.trim()) errors.push("Setiap item butuh deskripsi");
       if (!Number.isInteger(item.qty) || item.qty < 1) errors.push("Qty harus bilangan bulat >= 1");
@@ -30,6 +31,17 @@ export class SalesService {
       throw new BadRequestException({ code: "SALE_INVALID", message: errors.join("; "), details: errors });
     }
 
+    if (dto.customerId) {
+      const customer = await this.prisma.customer.findFirst({ where: { id: dto.customerId, tenantId }, select: { id: true } });
+      if (!customer) throw new BadRequestException({ code: "CUSTOMER_NOT_FOUND", message: "Pelanggan tidak ditemukan" });
+    }
+    for (const item of dto.items) {
+      if (item.productId) {
+        const product = await this.prisma.product.findFirst({ where: { id: item.productId, tenantId }, select: { id: true } });
+        if (!product) throw new BadRequestException({ code: "PRODUCT_NOT_FOUND", message: "Produk tidak ditemukan" });
+      }
+    }
+
     if (opts.idempotencyKey) {
       const existing = await this.prisma.sale.findUnique({
         where: { tenantId_idempotencyKey: { tenantId, idempotencyKey: opts.idempotencyKey } },
@@ -39,7 +51,9 @@ export class SalesService {
     }
 
     const totals = calculateTotals(dto.items, dto.discount, dto.tax);
-    const sale = await this.prisma.$transaction(async (tx) => {
+    let sale: any;
+    try {
+      sale = await this.prisma.$transaction(async (tx) => {
       const created = await tx.sale.create({
         data: {
           tenantId,
@@ -76,17 +90,29 @@ export class SalesService {
       });
       return created;
     });
+    } catch (error) {
+      if ((error as { code?: string })?.code === "P2002" && opts.idempotencyKey) {
+        const existing = await this.prisma.sale.findUnique({
+          where: { tenantId_idempotencyKey: { tenantId, idempotencyKey: opts.idempotencyKey } },
+          include: { items: true },
+        });
+        if (existing) return existing;
+      }
+      throw error;
+    }
     return sale;
   }
 
   async list(tenantId: string, query: SaleListQuery) {
-    const limit = Math.min(Math.max(query.limit ?? 20, 1), 100);
-    const offset = Math.max(query.offset ?? 0, 0);
+    const limit = Math.min(Math.max(Number.isFinite(query.limit) ? (query.limit as number) : 20, 1), 100);
+    const offset = Math.max(Number.isFinite(query.offset) ? (query.offset as number) : 0, 0);
+    const from = query.from ? new Date(query.from) : undefined;
+    const to = query.to ? new Date(query.to) : undefined;
+    if (from && Number.isNaN(from.getTime())) throw new BadRequestException({ code: "INVALID_DATE", message: "Tanggal mulai tidak valid" });
+    if (to && Number.isNaN(to.getTime())) throw new BadRequestException({ code: "INVALID_DATE", message: "Tanggal akhir tidak valid" });
     const where = {
       tenantId,
-      ...(query.from || query.to
-        ? { occurredAt: { ...(query.from ? { gte: new Date(query.from) } : {}), ...(query.to ? { lte: new Date(query.to) } : {}) } }
-        : {}),
+      ...(from || to ? { occurredAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } } : {}),
     };
     const [sales, total] = await Promise.all([
       this.prisma.sale.findMany({ where, include: { items: true }, orderBy: { occurredAt: "desc" }, take: limit, skip: offset }),
@@ -105,14 +131,23 @@ type SaleWithItems = {
 } & Record<string, unknown>;
 
 export function toSaleResponse(sale: SaleWithItems) {
+  const s = sale as any;
   return {
-    ...sale,
+    id: s.id,
+    occurredAt: s.occurredAt,
+    customerId: s.customerId ?? null,
+    notes: s.notes ?? null,
     subtotal: Number(sale.subtotal).toFixed(2),
     discount: Number(sale.discount).toFixed(2),
     tax: Number(sale.tax).toFixed(2),
     total: Number(sale.total).toFixed(2),
-    items: sale.items.map((item) => ({
-      ...item,
+    source: s.source,
+    createdAt: s.createdAt,
+    items: sale.items.map((item: any) => ({
+      id: item.id,
+      productId: item.productId ?? null,
+      description: item.description,
+      qty: item.qty,
       unitPrice: Number(item.unitPrice).toFixed(2),
       lineTotal: Number(item.lineTotal).toFixed(2),
     })),

@@ -1,5 +1,5 @@
-﻿import { Body, Controller, Get, HttpCode, Post, Res, UseGuards } from "@nestjs/common";
-import type { Response } from "express";
+﻿import { Body, Controller, Get, HttpCode, Post, Req, Res, UseGuards } from "@nestjs/common";
+import type { Request, Response } from "express";
 import { loadEnv } from "../../config/env.js";
 import { CurrentUser } from "../../common/current-user.decorator.js";
 import { JwtAuthGuard } from "../../common/jwt-auth.guard.js";
@@ -25,7 +25,8 @@ export class AuthController {
   }
 
   @Post("logout")
-  logout(@Res({ passthrough: true }) res: Response) {
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    await this.auth.logout(req.cookies?.[env.AUTH_COOKIE_NAME]);
     res.clearCookie(env.AUTH_COOKIE_NAME, { path: "/" });
     return { ok: true };
   }

@@ -19,7 +19,7 @@ export class ChatReadTools {
   }
 
   async findProducts(tenantId: string, args: { query: string }) {
-    const query = (args.query ?? "").trim();
+    const query = String(args.query ?? "").trim();
     if (!query) return { error: "Kata kunci produk kosong." };
     const products = await this.prisma.product.findMany({
       where: { tenantId, OR: [{ name: { contains: query } }, { sku: { contains: query } }] },

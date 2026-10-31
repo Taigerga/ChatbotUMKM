@@ -42,6 +42,8 @@ function buildFromEnv(): AiProvider[] {
   };
   for (const name of [env.AI_PRIMARY, env.AI_FALLBACK]) {
     if (!name || list.some((p) => p.name === name)) continue;
+    if (name === "gemini" && !env.GEMINI_API_KEY) continue;
+    if (name === "openai-compatible" && (!env.OPENAI_COMPAT_BASE_URL || !env.OPENAI_COMPAT_MODEL)) continue;
     const factory = factories[name];
     if (factory) list.push(factory());
   }

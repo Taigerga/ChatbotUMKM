@@ -1,4 +1,4 @@
-﻿import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+﻿import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { randomUUID } from "node:crypto";
@@ -25,7 +25,7 @@ export class ChatService {
 
   async send(tenantId: string, userId: string, dto: SendMessageDto) {
     const conversation = dto.conversationId
-      ? await this.prisma.chatConversation.findFirst({ where: { id: dto.conversationId, tenantId } })
+      ? await this.prisma.chatConversation.findFirst({ where: { id: dto.conversationId, tenantId, userId } })
       : await this.prisma.chatConversation.create({ data: { tenantId, userId, title: dto.message.slice(0, 60) } });
     if (!conversation) throw new NotFoundException({ code: "CONVERSATION_NOT_FOUND", message: "Percakapan tidak ditemukan" });
 
@@ -61,25 +61,56 @@ export class ChatService {
   async confirm(tenantId: string, userId: string, actionId: string) {
     const action = await this.prisma.pendingAction.findFirst({ where: { id: actionId, tenantId } });
     if (!action) throw new NotFoundException({ code: "ACTION_NOT_FOUND", message: "Aksi tidak ditemukan" });
-    if (action.status === "executed") return { status: "executed", result: action.result };
+
+    const conversation = await this.prisma.chatConversation.findFirst({
+      where: { id: action.conversationId, tenantId, userId },
+      select: { id: true },
+    });
+    if (!conversation) throw new NotFoundException({ code: "ACTION_NOT_FOUND", message: "Aksi tidak ditemukan" });
+
+    if (action.status === "executed") return { status: "executed", result: action.result as { saleId: string; total: string } };
     if (action.status === "cancelled") throw new ConflictException({ code: "ACTION_CANCELLED", message: "Aksi sudah dibatalkan" });
     if (action.status !== "proposed") throw new ConflictException({ code: "ACTION_NOT_PENDING", message: "Aksi tidak bisa dikonfirmasi" });
     if (action.expiresAt.getTime() < Date.now()) {
       throw new ConflictException({ code: "ACTION_EXPIRED", message: "Aksi sudah kedaluwarsa, minta ulang" });
     }
 
-    const sale = await this.sales.create(tenantId, userId, action.payload as unknown as CreateSaleDto, {
+    const payload = plainToInstance(CreateSaleDto, normalizeArgs(action.payload as Record<string, unknown>));
+    const problems = await validate(payload, { whitelist: true });
+    if (problems.length > 0) throw new BadRequestException({ code: "SALE_INVALID", message: "Data aksi tidak valid" });
+    const businessErrors = this.sales.validate(payload);
+    if (businessErrors.length > 0) throw new BadRequestException({ code: "SALE_INVALID", message: businessErrors.join("; "), details: businessErrors });
+
+    const sale = await this.sales.create(tenantId, userId, payload, {
       idempotencyKey: action.id,
       source: "chat",
     });
     const result = { saleId: sale.id, total: Number(sale.total).toFixed(2) };
-    await this.prisma.pendingAction.update({ where: { id: action.id }, data: { status: "executed", executedAt: new Date(), result } });
+
+    const updated = await this.prisma.pendingAction.updateMany({
+      where: { id: action.id, tenantId, status: "proposed" },
+      data: { status: "executed", executedAt: new Date(), result },
+    });
+    if (updated.count === 0) {
+      const latest = await this.prisma.pendingAction.findUnique({ where: { id: action.id } });
+      if (latest?.status === "executed" && latest.result) {
+        return { status: "executed", result: latest.result as { saleId: string; total: string } };
+      }
+      throw new ConflictException({ code: "ACTION_NOT_PENDING", message: "Aksi tidak bisa dikonfirmasi" });
+    }
     return { status: "executed", result };
   }
 
-  async cancel(tenantId: string, actionId: string) {
+  async cancel(tenantId: string, userId: string, actionId: string) {
     const action = await this.prisma.pendingAction.findFirst({ where: { id: actionId, tenantId } });
     if (!action) throw new NotFoundException({ code: "ACTION_NOT_FOUND", message: "Aksi tidak ditemukan" });
+
+    const conversation = await this.prisma.chatConversation.findFirst({
+      where: { id: action.conversationId, tenantId, userId },
+      select: { id: true },
+    });
+    if (!conversation) throw new NotFoundException({ code: "ACTION_NOT_FOUND", message: "Aksi tidak ditemukan" });
+
     if (action.status === "executed") throw new ConflictException({ code: "ACTION_EXECUTED", message: "Aksi sudah dijalankan" });
     await this.prisma.pendingAction.update({ where: { id: action.id }, data: { status: "cancelled" } });
     return { status: "cancelled" };
@@ -95,10 +126,10 @@ export class ChatService {
 
   private async runRead(tenantId: string, name: string, args: Record<string, unknown>) {
     if (name === "getSalesSummary") {
-      return this.readTools.getSalesSummary(tenantId, args as { from: string; to: string });
+      return this.readTools.getSalesSummary(tenantId, { from: String(args.from ?? ""), to: String(args.to ?? "") });
     }
     if (name === "findProducts") {
-      return this.readTools.findProducts(tenantId, args as { query: string });
+      return this.readTools.findProducts(tenantId, { query: String(args.query ?? "") });
     }
     return { error: `Tool ${name} tidak tersedia` };
   }

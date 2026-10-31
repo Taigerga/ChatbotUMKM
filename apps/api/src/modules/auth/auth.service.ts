@@ -44,6 +44,15 @@ export class AuthService {
     return this.buildResult(user.id, user.email, user.name, membership.tenantId, user.tokenVersion);
   }
 
+  async logout(token?: string): Promise<void> {
+    if (!token) return;
+    try {
+      const payload = await this.jwt.verifyAsync<{ sub: string }>(token);
+      await this.prisma.user.update({ where: { id: payload.sub }, data: { tokenVersion: { increment: 1 } } });
+    } catch {
+      // ignore invalid/expired tokens
+    }
+  }
   async me(userId: string) {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
