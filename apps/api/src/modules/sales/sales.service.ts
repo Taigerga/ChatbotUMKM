@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service.js";
 import { CreateSaleDto } from "./dto/create-sale.dto.js";
 import { calculateTotals } from "./sale-calculator.js";
@@ -103,7 +103,67 @@ export class SalesService {
     return sale;
   }
 
-  async list(tenantId: string, query: SaleListQuery) {
+  async get(tenantId: string, id: string) {
+    const sale = await this.prisma.sale.findFirst({ where: { id, tenantId }, include: { items: true } });
+    if (!sale) throw new NotFoundException({ code: "SALE_NOT_FOUND", message: "Penjualan tidak ditemukan" });
+    return toSaleResponse(sale);
+  }
+
+  async update(tenantId: string, userId: string, id: string, dto: CreateSaleDto) {
+    const errors = this.validate(dto);
+    if (errors.length > 0) throw new BadRequestException({ code: "SALE_INVALID", message: errors.join("; "), details: errors });
+
+    if (dto.customerId) {
+      const customer = await this.prisma.customer.findFirst({ where: { id: dto.customerId, tenantId }, select: { id: true } });
+      if (!customer) throw new BadRequestException({ code: "CUSTOMER_NOT_FOUND", message: "Pelanggan tidak ditemukan" });
+    }
+    for (const item of dto.items) {
+      if (item.productId) {
+        const product = await this.prisma.product.findFirst({ where: { id: item.productId, tenantId }, select: { id: true } });
+        if (!product) throw new BadRequestException({ code: "PRODUCT_NOT_FOUND", message: "Produk tidak ditemukan" });
+      }
+    }
+
+    const totals = calculateTotals(dto.items, dto.discount, dto.tax);
+    const sale = await this.prisma.$transaction(async (tx) => {
+      await tx.saleItem.deleteMany({ where: { saleId: id } });
+      const updated = await tx.sale.update({
+        where: { id },
+        data: {
+          customerId: dto.customerId ?? null,
+          occurredAt: new Date(dto.occurredAt),
+          notes: dto.notes ?? null,
+          subtotal: totals.subtotal,
+          discount: (dto.discount ?? 0).toFixed(2),
+          tax: (dto.tax ?? 0).toFixed(2),
+          total: totals.total,
+          items: {
+            create: dto.items.map((item, index) => ({
+              productId: item.productId ?? null,
+              description: item.description,
+              qty: item.qty,
+              unitPrice: item.unitPrice.toFixed(2),
+              lineTotal: totals.lineTotals[index],
+            })),
+          },
+        },
+        include: { items: true },
+      });
+      await tx.auditLog.create({ data: { tenantId, userId, action: "sale.updated", entity: "Sale", entityId: id, summary: { total: totals.total, items: dto.items.length } } });
+      return updated;
+    });
+    return toSaleResponse(sale);
+  }
+
+  async remove(tenantId: string, userId: string, id: string) {
+    const sale = await this.prisma.sale.findFirst({ where: { id, tenantId }, select: { id: true } });
+    if (!sale) throw new NotFoundException({ code: "SALE_NOT_FOUND", message: "Penjualan tidak ditemukan" });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.sale.delete({ where: { id } });
+      await tx.auditLog.create({ data: { tenantId, userId, action: "sale.deleted", entity: "Sale", entityId: id, summary: {} } });
+    });
+    return { ok: true };
+  }
     const limit = Math.min(Math.max(Number.isFinite(query.limit) ? (query.limit as number) : 20, 1), 100);
     const offset = Math.max(Number.isFinite(query.offset) ? (query.offset as number) : 0, 0);
     const from = query.from ? new Date(query.from) : undefined;

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Headers, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { CurrentTenant } from "../../common/current-tenant.decorator.js";
 import { CurrentUser } from "../../common/current-user.decorator.js";
 import { JwtAuthGuard, type AuthContext } from "../../common/jwt-auth.guard.js";
@@ -22,8 +22,20 @@ export class SalesController {
     return { sale: toSaleResponse(sale) };
   }
 
-  @Get()
-  async list(
+  @Get(":id")
+  get(@CurrentTenant() tenantId: string, @Param("id") id: string) {
+    return this.sales.get(tenantId, id);
+  }
+
+  @Put(":id")
+  update(@CurrentUser() auth: AuthContext, @CurrentTenant() tenantId: string, @Param("id") id: string, @Body() dto: CreateSaleDto) {
+    return this.sales.update(tenantId, auth.userId, id, dto);
+  }
+
+  @Delete(":id")
+  remove(@CurrentUser() auth: AuthContext, @CurrentTenant() tenantId: string, @Param("id") id: string) {
+    return this.sales.remove(tenantId, auth.userId, id);
+  }
     @CurrentTenant() tenantId: string,
     @Query("from") from?: string,
     @Query("to") to?: string,
