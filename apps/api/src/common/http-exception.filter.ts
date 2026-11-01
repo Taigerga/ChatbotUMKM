@@ -30,7 +30,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
         details: raw.details ?? (Array.isArray(raw.message) ? raw.message : undefined),
       };
     } else {
-      this.logger.error(`Unhandled error on ${request.method} ${request.url}`);
+      this.logger.error(
+        `Unhandled error on ${request.method} ${request.url}`,
+        exception instanceof Error ? exception.stack : String(exception),
+      );
       body = { statusCode: HttpStatus.INTERNAL_SERVER_ERROR, code: "INTERNAL_ERROR", message: "Terjadi kesalahan pada server" };
     }
 
