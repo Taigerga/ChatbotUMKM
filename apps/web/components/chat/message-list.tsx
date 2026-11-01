@@ -16,6 +16,7 @@ export type ChatMessage = {
       discount: string;
       tax: string;
       total: string;
+      warnings?: string[];
     };
     expiresAt: string;
     status?: "proposed" | "executed" | "cancelled";

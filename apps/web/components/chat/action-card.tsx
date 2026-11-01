@@ -21,6 +21,7 @@ type Preview = {
   discount: string;
   tax: string;
   total: string;
+  warnings?: string[];
 };
 
 type Action = {
@@ -109,6 +110,13 @@ export function ActionCard({
             <span className="tabular-nums">Rp{Number(action.preview.total).toLocaleString("id-ID")}</span>
           </div>
         </div>
+        {action.preview.warnings && action.preview.warnings.length > 0 && (
+          <ul className="text-amber-600 list-disc pl-4 text-xs">
+            {action.preview.warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        )}
         {action.result && (
           <p className="text-muted-foreground text-xs">ID transaksi: {action.result.saleId}</p>
         )}
