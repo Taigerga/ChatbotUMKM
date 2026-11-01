@@ -85,9 +85,34 @@ export class ChatService {
     let result: unknown;
 
     if (action.tool === "createSale" || action.tool === "updateSale") {
+      // resolve/create missing customer
+      let customerId = payload.customerId ? String(payload.customerId) : undefined;
+      if (!customerId && payload.createCustomer) {
+        const customerDto = plainToInstance(CreateCustomerDto, payload.createCustomer as Record<string, unknown>);
+        const customerProblems = await validate(customerDto, { whitelist: true });
+        if (customerProblems.length > 0) throw new BadRequestException({ code: "CUSTOMER_INVALID", message: "Data pelanggan baru tidak valid" });
+        const createdCustomer = await this.customers.create(tenantId, customerDto);
+        customerId = createdCustomer.id;
+      }
+
+      // resolve/create missing products per item
+      const rawItems = Array.isArray(payload.items) ? (payload.items as Record<string, unknown>[]) : [];
+      const resolvedItems: Record<string, unknown>[] = [];
+      for (const item of rawItems) {
+        let productId = item.productId ? String(item.productId) : undefined;
+        if (!productId && item.createProduct) {
+          const productDto = plainToInstance(CreateProductDto, item.createProduct as Record<string, unknown>);
+          const productProblems = await validate(productDto, { whitelist: true });
+          if (productProblems.length > 0) throw new BadRequestException({ code: "PRODUCT_INVALID", message: "Data produk baru tidak valid" });
+          const createdProduct = await this.products.create(tenantId, productDto);
+          productId = createdProduct.id;
+        }
+        resolvedItems.push({ ...item, productId });
+      }
+
       const salePayload = action.tool === "updateSale"
-        ? { occurredAt: payload.occurredAt, items: payload.items, discount: payload.discount, tax: payload.tax, notes: payload.notes }
-        : payload;
+        ? { occurredAt: payload.occurredAt, customerId, items: resolvedItems, discount: payload.discount, tax: payload.tax, notes: payload.notes }
+        : { occurredAt: payload.occurredAt, customerId, items: resolvedItems, discount: payload.discount, tax: payload.tax, notes: payload.notes };
       const dto = plainToInstance(CreateSaleDto, normalizeSaleArgs(salePayload));
       const problems = await validate(dto, { whitelist: true });
       if (problems.length > 0) throw new BadRequestException({ code: "SALE_INVALID", message: "Data aksi tidak valid" });
@@ -238,8 +263,8 @@ export class ChatService {
     };
   }
 
-  private async resolveSaleRefs(tenantId: string, args: Record<string, unknown>): Promise<{ customerId?: string; reply?: string }> {
-    const result: { customerId?: string; reply?: string } = {};
+  private async resolveSaleRefs(tenantId: string, args: Record<string, unknown>, createMissing: boolean): Promise<{ customerId?: string; warnings?: string[]; reply?: string }> {
+    const result: { customerId?: string; warnings?: string[]; reply?: string } = { warnings: [] };
     if (args.customer) {
       const matches = await this.prisma.customer.findMany({
         where: { tenantId, OR: [{ name: { contains: String(args.customer) } }, { externalRef: String(args.customer) }] },
@@ -247,14 +272,19 @@ export class ChatService {
         take: 6,
       });
       if (matches.length === 0) {
-        result.reply = `Pelanggan "${args.customer}" tidak ditemukan. Buat pelanggan baru dulu atau sebut nama/referensi yang benar.`;
-        return result;
-      }
-      if (matches.length > 1) {
+        if (createMissing) {
+          args.createCustomer = { externalRef: String(args.customer), name: String(args.customer) };
+          result.warnings!.push(`Pelanggan "${args.customer}" akan dibuat baru`);
+        } else {
+          result.reply = `Pelanggan "${args.customer}" tidak ditemukan. Buat pelanggan baru dulu atau sebut nama/referensi yang benar.`;
+          return result;
+        }
+      } else if (matches.length > 1) {
         result.reply = `Ditemukan beberapa pelanggan mirip "${args.customer}": ${matches.map((m) => m.name).join(", ")}. Sebutkan yang tepat.`;
         return result;
+      } else {
+        result.customerId = matches[0].id;
       }
-      result.customerId = matches[0].id;
     }
 
     if (Array.isArray(args.items)) {
@@ -268,14 +298,20 @@ export class ChatService {
             take: 6,
           });
           if (matches.length === 0) {
-            result.reply = `Produk "${item.product}" tidak ditemukan. Buat produk baru dulu atau sebut nama/SKU yang benar.`;
-            return result;
-          }
-          if (matches.length > 1) {
+            if (createMissing) {
+              const sku = item.sku ? String(item.sku) : String(item.product).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "produk";
+              next.createProduct = { sku, name: String(item.product), price: Number(item.unitPrice) };
+              result.warnings!.push(`Produk "${item.product}" akan dibuat baru`);
+            } else {
+              result.reply = `Produk "${item.product}" tidak ditemukan. Buat produk baru dulu atau sebut nama/SKU yang benar.`;
+              return result;
+            }
+          } else if (matches.length > 1) {
             result.reply = `Ditemukan beberapa produk mirip "${item.product}": ${matches.map((m) => m.name).join(", ")}. Sebutkan yang tepat.`;
             return result;
+          } else {
+            next.productId = matches[0].id;
           }
-          next.productId = matches[0].id;
         }
         resolved.push(next);
       }
@@ -309,11 +345,13 @@ export class ChatService {
 
   private async propose(tenantId: string, conversationId: string, tool: string, args: Record<string, unknown>, text?: string) {
     if (tool === "createSale") {
-      const resolved = await this.resolveSaleRefs(tenantId, args);
+      const createMissing = args.createMissing === true;
+      const resolved = await this.resolveSaleRefs(tenantId, args, createMissing);
       if (resolved.reply) {
         await this.prisma.chatMessage.create({ data: { conversationId, role: "assistant", content: resolved.reply } });
         return { conversationId, reply: resolved.reply };
       }
+      const warnings = resolved.warnings ?? [];
       const payload = plainToInstance(CreateSaleDto, normalizeSaleArgs({ ...args, customerId: resolved.customerId }));
       const problems = await validate(payload, { whitelist: true });
       if (problems.length > 0) {
@@ -343,7 +381,24 @@ export class ChatService {
         total: totals.total,
         source: "chat",
       };
-      return this.createAction(tenantId, conversationId, tool, { occurredAt: payload.occurredAt, customerId: payload.customerId, items: payload.items, discount: payload.discount ?? 0, tax: payload.tax ?? 0, notes: payload.notes }, preview, text);
+      const originalItems = Array.isArray(args.items) ? (args.items as Record<string, unknown>[]) : [];
+      const actionItems = payload.items.map((item, index) => ({
+        ...item,
+        createProduct: originalItems[index]?.createProduct,
+      }));
+      const actionPayload = {
+        occurredAt: payload.occurredAt,
+        customerId: payload.customerId,
+        customer: args.customer,
+        createCustomer: args.createCustomer,
+        createMissing,
+        items: actionItems,
+        discount: payload.discount ?? 0,
+        tax: payload.tax ?? 0,
+        notes: payload.notes,
+      };
+      const previewWithWarnings = warnings.length ? { ...preview, warnings } : preview;
+      return this.createAction(tenantId, conversationId, tool, actionPayload, previewWithWarnings, text);
     }
 
     if (tool === "createProduct") {
@@ -389,11 +444,13 @@ export class ChatService {
         await this.prisma.chatMessage.create({ data: { conversationId, role: "assistant", content: reply } });
         return { conversationId, reply };
       }
-      const resolved = await this.resolveSaleRefs(tenantId, args);
+      const createMissing = args.createMissing === true;
+      const resolved = await this.resolveSaleRefs(tenantId, args, createMissing);
       if (resolved.reply) {
         await this.prisma.chatMessage.create({ data: { conversationId, role: "assistant", content: resolved.reply } });
         return { conversationId, reply: resolved.reply };
       }
+      const warnings = resolved.warnings ?? [];
       const payload = plainToInstance(CreateSaleDto, normalizeSaleArgs({ ...args, customerId: resolved.customerId ?? sale.customerId ?? undefined }));
       const problems = await validate(payload, { whitelist: true });
       if (problems.length > 0) {
@@ -420,7 +477,25 @@ export class ChatService {
         total: totals.total,
         source: "chat",
       };
-      return this.createAction(tenantId, conversationId, tool, { saleId, occurredAt: payload.occurredAt, customerId: payload.customerId, items: payload.items, discount: payload.discount ?? 0, tax: payload.tax ?? 0, notes: payload.notes }, preview, text);
+      const originalItems = Array.isArray(args.items) ? (args.items as Record<string, unknown>[]) : [];
+      const actionItems = payload.items.map((item, index) => ({
+        ...item,
+        createProduct: originalItems[index]?.createProduct,
+      }));
+      const actionPayload = {
+        saleId,
+        occurredAt: payload.occurredAt,
+        customerId: payload.customerId,
+        customer: args.customer,
+        createCustomer: args.createCustomer,
+        createMissing,
+        items: actionItems,
+        discount: payload.discount ?? 0,
+        tax: payload.tax ?? 0,
+        notes: payload.notes,
+      };
+      const previewWithWarnings = warnings.length ? { ...preview, warnings } : preview;
+      return this.createAction(tenantId, conversationId, tool, actionPayload, previewWithWarnings, text);
     }
 
     if (tool === "deleteSale") {
