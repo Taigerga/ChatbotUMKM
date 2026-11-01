@@ -1,7 +1,8 @@
-import { BarChart3, Bot, Boxes, FileUp, LayoutDashboard, Receipt, Settings, Users } from "lucide-react";
+import { BarChart3, Bot, Boxes, FileUp, LayoutDashboard, PlusCircle, Receipt, Settings, Users } from "lucide-react";
 
 export const NAV = [
   { href: "/chat", label: "Chatbot", icon: Bot, ready: true },
+  { href: "/input", label: "Input Cepat", icon: PlusCircle, ready: true },
   { href: "/overview", label: "Ringkasan", icon: LayoutDashboard, ready: true },
   { href: "/transactions", label: "Transaksi", icon: Receipt, ready: true },
   { href: "/products", label: "Produk", icon: Boxes, ready: true },
