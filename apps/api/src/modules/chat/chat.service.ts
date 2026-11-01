@@ -345,7 +345,7 @@ export class ChatService {
 
   private async propose(tenantId: string, conversationId: string, tool: string, args: Record<string, unknown>, text?: string) {
     if (tool === "createSale") {
-      const createMissing = args.createMissing === true;
+      const createMissing = args.createMissing !== false;
       const resolved = await this.resolveSaleRefs(tenantId, args, createMissing);
       if (resolved.reply) {
         await this.prisma.chatMessage.create({ data: { conversationId, role: "assistant", content: resolved.reply } });
@@ -444,7 +444,7 @@ export class ChatService {
         await this.prisma.chatMessage.create({ data: { conversationId, role: "assistant", content: reply } });
         return { conversationId, reply };
       }
-      const createMissing = args.createMissing === true;
+      const createMissing = args.createMissing !== false;
       const resolved = await this.resolveSaleRefs(tenantId, args, createMissing);
       if (resolved.reply) {
         await this.prisma.chatMessage.create({ data: { conversationId, role: "assistant", content: resolved.reply } });
