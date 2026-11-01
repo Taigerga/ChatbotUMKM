@@ -19,6 +19,25 @@ type MlModel = {
   reason: string;
 };
 
+type ReadinessModel = {
+  status: "ready" | "limited" | "not_ready";
+  reason: string;
+  steps: string[];
+};
+
+type Readiness = {
+  counts: {
+    sales: number;
+    distinctDays: number;
+    customers: number;
+    products: number;
+    multiItemSales: number;
+    distinctCustomers: number;
+    spanDays: number;
+  };
+  models: Record<string, ReadinessModel>;
+};
+
 type Job = { id: string; status: string; result?: unknown; error?: string | null };
 
 const LABELS: Record<string, string> = {
@@ -45,19 +64,24 @@ function flatten(value: unknown, prefix = ""): [string, string][] {
 
 export default function MachineLearningPage() {
   const [models, setModels] = useState<Record<string, MlModel> | null>(null);
+  const [readiness, setReadiness] = useState<Readiness | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiFetch<{ scope: string; models: Record<string, MlModel> }>("/ml/models");
-      setModels(res.models);
+      const [modelRes, readinessRes] = await Promise.all([
+        apiFetch<{ scope: string; models: Record<string, MlModel> }>("/ml/models"),
+        apiFetch<Readiness>("/ml/data-readiness"),
+      ]);
+      setModels(modelRes.models);
+      setReadiness(readinessRes);
       setError(null);
     } catch (err) {
       setModels(null);
+      setReadiness(null);
       setError(err instanceof Error ? err.message : "Layanan ML tidak tersedia.");
     } finally {
       setLoading(false);
@@ -68,31 +92,6 @@ export default function MachineLearningPage() {
     load();
   }, [load]);
 
-  async function pollJob(jobId: string) {
-    for (let attempt = 0; attempt < 60; attempt += 1) {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      const job = await apiFetch<Job>(`/ml/jobs/${jobId}`);
-      if (job.status === "done") return job;
-      if (job.status === "failed") throw new Error(job.error ?? "Pelatihan gagal.");
-    }
-    throw new Error("Pelatihan melewati batas waktu.");
-  }
-
-  async function train(model: string) {
-    setBusy(model);
-    setMessage(`Melatih ${LABELS[model] ?? model}...`);
-    try {
-      const start = await apiFetch<{ job_id: string }>(`/ml/train/${model}`, { method: "POST" });
-      await pollJob(start.job_id);
-      setMessage(`${LABELS[model] ?? model} selesai dilatih.`);
-      await load();
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Pelatihan gagal.");
-    } finally {
-      setBusy(null);
-    }
-  }
-
   return (
     <div className="grid gap-4 p-4">
       <Card>
@@ -100,8 +99,8 @@ export default function MachineLearningPage() {
           <div>
             <CardTitle>Machine Learning</CardTitle>
             <p className="text-muted-foreground mt-1 text-xs">
-              Semua model dilatih dari dataset publik 150k (global), bukan data toko Anda. Hasil adalah referensi,
-              bukan jaminan.
+              Semua model dilatih dari dataset publik 150k (global), bukan data toko Anda. Model global tidak dilatih
+              ulang per toko. Hasil adalah referensi, bukan jaminan.
             </p>
           </div>
           <Button size="sm" variant="outline" onClick={load} disabled={loading}>
@@ -115,6 +114,38 @@ export default function MachineLearningPage() {
             </p>
           )}
           {message && <p className="text-sm">{message}</p>}
+
+          {readiness && (
+            <div className="grid gap-3 rounded-md border p-3">
+              <div>
+                <p className="font-medium text-sm">Kesiapan data toko</p>
+                <p className="text-muted-foreground text-xs">
+                  {readiness.counts.sales} penjualan, {readiness.counts.distinctDays} hari transaksi,{" "}
+                  {readiness.counts.distinctCustomers} pelanggan bertransaksi, {readiness.counts.multiItemSales} transaksi
+                  multi-item.
+                </p>
+              </div>
+              <div className="grid gap-2 md:grid-cols-2">
+                {Object.entries(readiness.models).map(([name, model]) => (
+                  <div key={name} className="rounded border p-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{LABELS[name] ?? name}</span>
+                      {statusBadge(model.status)}
+                    </div>
+                    <p className="text-muted-foreground text-xs">{model.reason}</p>
+                    {model.steps.length > 0 && (
+                      <ul className="text-muted-foreground mt-1 list-disc pl-4 text-xs">
+                        {model.steps.map((step) => (
+                          <li key={step}>{step}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {!models && !error && <p className="text-muted-foreground text-sm">Memuat status model...</p>}
           {models &&
             Object.entries(models).map(([name, model]) => (
@@ -123,20 +154,11 @@ export default function MachineLearningPage() {
                   <span className="font-medium">{LABELS[name] ?? name}</span>
                   {statusBadge(model.status)}
                   <span className="text-muted-foreground text-xs">{model.reason}</span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="ml-auto"
-                    disabled={busy !== null}
-                    onClick={() => train(name)}
-                  >
-                    {busy === name ? "Melatih..." : model.available ? "Latih ulang" : "Latih"}
-                  </Button>
                 </div>
                 <div className="text-muted-foreground grid gap-1 text-xs md:grid-cols-2">
                   <span>Sampel: {model.samples.toLocaleString("id-ID")}</span>
                   <span>
-                    Rentang data: {model.data_range.length === 2 ? `${model.data_range[0]} – ${model.data_range[1]}` : "-"}
+                    Rentang data: {model.data_range.length === 2 ? `${model.data_range[0]} — ${model.data_range[1]}` : "-"}
                   </span>
                   <span>
                     Dilatih: {model.trained_at ? new Date(model.trained_at).toLocaleString("id-ID") : "-"}

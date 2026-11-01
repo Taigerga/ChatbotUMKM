@@ -118,6 +118,18 @@ export class ChatService {
       const saleId = String(payload.saleId);
       await this.sales.remove(tenantId, userId, saleId);
       result = { saleId };
+    } else if (action.tool === "updateProduct") {
+      const product = await this.products.update(tenantId, String(payload.productId), payload as any);
+      result = { productId: product.id, sku: product.sku, name: product.name };
+    } else if (action.tool === "deleteProduct") {
+      await this.products.remove(tenantId, String(payload.productId));
+      result = { productId: payload.productId };
+    } else if (action.tool === "updateCustomer") {
+      const customer = await this.customers.update(tenantId, String(payload.customerId), payload as any);
+      result = { customerId: customer.id, externalRef: customer.externalRef, name: customer.name };
+    } else if (action.tool === "deleteCustomer") {
+      await this.customers.remove(tenantId, String(payload.customerId));
+      result = { customerId: payload.customerId };
     } else {
       throw new BadRequestException({ code: "ACTION_UNKNOWN", message: "Jenis aksi tidak dikenal" });
     }
@@ -151,6 +163,127 @@ export class ChatService {
     return { status: "cancelled" };
   }
 
+  async listConversations(tenantId: string, userId: string, limit = 30, offset = 0) {
+    const take = Math.min(Math.max(limit || 30, 1), 100);
+    const skip = Math.max(offset || 0, 0);
+    const [items, total] = await Promise.all([
+      this.prisma.chatConversation.findMany({
+        where: { tenantId, userId },
+        orderBy: { updatedAt: "desc" },
+        take,
+        skip,
+        select: { id: true, title: true, updatedAt: true, _count: { select: { messages: true } } },
+      }),
+      this.prisma.chatConversation.count({ where: { tenantId, userId } }),
+    ]);
+    return {
+      items: items.map((c) => ({ id: c.id, title: c.title ?? "Percakapan", updatedAt: c.updatedAt, messageCount: c._count.messages })),
+      total,
+      limit: take,
+      offset: skip,
+    };
+  }
+
+  async getConversation(tenantId: string, userId: string, id: string) {
+    const conv = await this.prisma.chatConversation.findFirst({
+      where: { id, tenantId, userId },
+      include: { messages: { orderBy: { createdAt: "asc" }, select: { id: true, role: true, content: true, toolName: true, toolResult: true, actionId: true, createdAt: true } } },
+    });
+    if (!conv) throw new NotFoundException({ code: "CONVERSATION_NOT_FOUND", message: "Percakapan tidak ditemukan" });
+
+    const actionIds = conv.messages.map((m) => m.actionId).filter((x): x is string => Boolean(x));
+    const actions = actionIds.length ? await this.prisma.pendingAction.findMany({ where: { id: { in: actionIds }, tenantId } }) : [];
+    const actionMap = new Map(actions.map((a) => [a.id, a]));
+
+    return {
+      conversation: { id: conv.id, title: conv.title ?? "Percakapan", createdAt: conv.createdAt, updatedAt: conv.updatedAt },
+      messages: conv.messages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        toolName: m.toolName,
+        toolResult: m.toolResult,
+        createdAt: m.createdAt,
+        action: m.actionId
+          ? this.toActionView(actionMap.get(m.actionId))
+          : undefined,
+      })),
+    };
+  }
+
+  async renameConversation(tenantId: string, userId: string, id: string, title?: string) {
+    const updated = await this.prisma.chatConversation.updateMany({
+      where: { id, tenantId, userId },
+      data: { title: (title ?? "").trim().slice(0, 80) || null },
+    });
+    if (updated.count === 0) throw new NotFoundException({ code: "CONVERSATION_NOT_FOUND", message: "Percakapan tidak ditemukan" });
+    return { ok: true };
+  }
+
+  async deleteConversation(tenantId: string, userId: string, id: string) {
+    const deleted = await this.prisma.chatConversation.deleteMany({ where: { id, tenantId, userId } });
+    if (deleted.count === 0) throw new NotFoundException({ code: "CONVERSATION_NOT_FOUND", message: "Percakapan tidak ditemukan" });
+    return { ok: true };
+  }
+
+  private toActionView(action: any) {
+    if (!action) return undefined;
+    return {
+      id: action.id,
+      tool: action.tool,
+      preview: action.preview,
+      status: action.status,
+      expiresAt: action.expiresAt,
+      result: action.result ?? undefined,
+    };
+  }
+
+  private async resolveSaleRefs(tenantId: string, args: Record<string, unknown>): Promise<{ customerId?: string; reply?: string }> {
+    const result: { customerId?: string; reply?: string } = {};
+    if (args.customer) {
+      const matches = await this.prisma.customer.findMany({
+        where: { tenantId, OR: [{ name: { contains: String(args.customer) } }, { externalRef: String(args.customer) }] },
+        select: { id: true, name: true },
+        take: 6,
+      });
+      if (matches.length === 0) {
+        result.reply = `Pelanggan "${args.customer}" tidak ditemukan. Buat pelanggan baru dulu atau sebut nama/referensi yang benar.`;
+        return result;
+      }
+      if (matches.length > 1) {
+        result.reply = `Ditemukan beberapa pelanggan mirip "${args.customer}": ${matches.map((m) => m.name).join(", ")}. Sebutkan yang tepat.`;
+        return result;
+      }
+      result.customerId = matches[0].id;
+    }
+
+    if (Array.isArray(args.items)) {
+      const resolved: Record<string, unknown>[] = [];
+      for (const item of args.items as Record<string, unknown>[]) {
+        const next = { ...item };
+        if (item.product && !item.productId) {
+          const matches = await this.prisma.product.findMany({
+            where: { tenantId, OR: [{ name: { contains: String(item.product) } }, { sku: String(item.product) }] },
+            select: { id: true, name: true },
+            take: 6,
+          });
+          if (matches.length === 0) {
+            result.reply = `Produk "${item.product}" tidak ditemukan. Buat produk baru dulu atau sebut nama/SKU yang benar.`;
+            return result;
+          }
+          if (matches.length > 1) {
+            result.reply = `Ditemukan beberapa produk mirip "${item.product}": ${matches.map((m) => m.name).join(", ")}. Sebutkan yang tepat.`;
+            return result;
+          }
+          next.productId = matches[0].id;
+        }
+        resolved.push(next);
+      }
+      args.items = resolved;
+    }
+    return result;
+  }
+
   private async loadTurns(conversationId: string): Promise<ChatTurn[]> {
     const messages = await this.prisma.chatMessage.findMany({
       where: { conversationId, role: { in: ["user", "assistant"] } },
@@ -176,7 +309,12 @@ export class ChatService {
 
   private async propose(tenantId: string, conversationId: string, tool: string, args: Record<string, unknown>, text?: string) {
     if (tool === "createSale") {
-      const payload = plainToInstance(CreateSaleDto, normalizeSaleArgs(args));
+      const resolved = await this.resolveSaleRefs(tenantId, args);
+      if (resolved.reply) {
+        await this.prisma.chatMessage.create({ data: { conversationId, role: "assistant", content: resolved.reply } });
+        return { conversationId, reply: resolved.reply };
+      }
+      const payload = plainToInstance(CreateSaleDto, normalizeSaleArgs({ ...args, customerId: resolved.customerId }));
       const problems = await validate(payload, { whitelist: true });
       if (problems.length > 0) {
         const reply = "Data penjualan belum lengkap. Sebutkan tanggal, item, jumlah, dan harga satuannya.";
@@ -205,7 +343,7 @@ export class ChatService {
         total: totals.total,
         source: "chat",
       };
-      return this.createAction(tenantId, conversationId, tool, { occurredAt: payload.occurredAt, items: payload.items, discount: payload.discount ?? 0, tax: payload.tax ?? 0, notes: payload.notes }, preview, text);
+      return this.createAction(tenantId, conversationId, tool, { occurredAt: payload.occurredAt, customerId: payload.customerId, items: payload.items, discount: payload.discount ?? 0, tax: payload.tax ?? 0, notes: payload.notes }, preview, text);
     }
 
     if (tool === "createProduct") {
@@ -251,7 +389,12 @@ export class ChatService {
         await this.prisma.chatMessage.create({ data: { conversationId, role: "assistant", content: reply } });
         return { conversationId, reply };
       }
-      const payload = plainToInstance(CreateSaleDto, normalizeSaleArgs(args));
+      const resolved = await this.resolveSaleRefs(tenantId, args);
+      if (resolved.reply) {
+        await this.prisma.chatMessage.create({ data: { conversationId, role: "assistant", content: resolved.reply } });
+        return { conversationId, reply: resolved.reply };
+      }
+      const payload = plainToInstance(CreateSaleDto, normalizeSaleArgs({ ...args, customerId: resolved.customerId ?? sale.customerId ?? undefined }));
       const problems = await validate(payload, { whitelist: true });
       if (problems.length > 0) {
         const reply = "Data penjualan belum lengkap. Sebutkan tanggal, item, jumlah, dan harga satuannya.";
@@ -277,7 +420,7 @@ export class ChatService {
         total: totals.total,
         source: "chat",
       };
-      return this.createAction(tenantId, conversationId, tool, { saleId, occurredAt: payload.occurredAt, items: payload.items, discount: payload.discount ?? 0, tax: payload.tax ?? 0, notes: payload.notes }, preview, text);
+      return this.createAction(tenantId, conversationId, tool, { saleId, occurredAt: payload.occurredAt, customerId: payload.customerId, items: payload.items, discount: payload.discount ?? 0, tax: payload.tax ?? 0, notes: payload.notes }, preview, text);
     }
 
     if (tool === "deleteSale") {
@@ -296,6 +439,56 @@ export class ChatService {
         warning: "Penjualan akan dihapus permanen.",
       };
       return this.createAction(tenantId, conversationId, tool, { saleId }, preview, text);
+    }
+
+    if (tool === "updateProduct") {
+      const productId = String(args.productId ?? "");
+      const product = await this.products.get(tenantId, productId).catch(() => null);
+      if (!product) {
+        const reply = "Produk tidak ditemukan.";
+        await this.prisma.chatMessage.create({ data: { conversationId, role: "assistant", content: reply } });
+        return { conversationId, reply };
+      }
+      const payload = { productId, sku: args.sku ?? product.sku, name: args.name ?? product.name, category: args.category ?? product.category, price: args.price === undefined ? Number(product.price) : Number(args.price), cost: args.cost === undefined ? (product.cost === null ? undefined : Number(product.cost)) : Number(args.cost) };
+      const preview = { before: { sku: product.sku, name: product.name, price: product.price }, after: { sku: payload.sku, name: payload.name, price: Number(payload.price).toFixed(2) } };
+      return this.createAction(tenantId, conversationId, tool, payload, preview, text);
+    }
+
+    if (tool === "deleteProduct") {
+      const productId = String(args.productId ?? "");
+      const product = await this.products.get(tenantId, productId).catch(() => null);
+      if (!product) {
+        const reply = "Produk tidak ditemukan.";
+        await this.prisma.chatMessage.create({ data: { conversationId, role: "assistant", content: reply } });
+        return { conversationId, reply };
+      }
+      const preview = { productId, sku: product.sku, name: product.name, warning: "Produk akan dihapus permanen." };
+      return this.createAction(tenantId, conversationId, tool, { productId }, preview, text);
+    }
+
+    if (tool === "updateCustomer") {
+      const customerId = String(args.customerId ?? "");
+      const customer = await this.customers.get(tenantId, customerId).catch(() => null);
+      if (!customer) {
+        const reply = "Pelanggan tidak ditemukan.";
+        await this.prisma.chatMessage.create({ data: { conversationId, role: "assistant", content: reply } });
+        return { conversationId, reply };
+      }
+      const payload = { customerId, externalRef: args.externalRef ?? customer.externalRef, name: args.name ?? customer.name, phone: args.phone ?? customer.phone, email: args.email ?? customer.email };
+      const preview = { before: { externalRef: customer.externalRef, name: customer.name }, after: { externalRef: payload.externalRef, name: payload.name } };
+      return this.createAction(tenantId, conversationId, tool, payload, preview, text);
+    }
+
+    if (tool === "deleteCustomer") {
+      const customerId = String(args.customerId ?? "");
+      const customer = await this.customers.get(tenantId, customerId).catch(() => null);
+      if (!customer) {
+        const reply = "Pelanggan tidak ditemukan.";
+        await this.prisma.chatMessage.create({ data: { conversationId, role: "assistant", content: reply } });
+        return { conversationId, reply };
+      }
+      const preview = { customerId, externalRef: customer.externalRef, name: customer.name, warning: "Pelanggan akan dihapus permanen." };
+      return this.createAction(tenantId, conversationId, tool, { customerId }, preview, text);
     }
 
     const reply = "Aksi tidak dikenal.";
@@ -317,7 +510,7 @@ export class ChatService {
       },
     });
     await this.prisma.chatMessage.create({
-      data: { conversationId, role: "assistant", content: reply, toolName: tool, toolResult: preview as any },
+      data: { conversationId, role: "assistant", content: reply, toolName: tool, toolResult: preview as any, actionId: action.id },
     });
     return { conversationId, reply, action: { id: action.id, tool, preview, expiresAt: action.expiresAt } };
   }
@@ -333,6 +526,7 @@ function normalizeSaleArgs(args: Record<string, unknown>): Record<string, unknow
     : [];
   return {
     occurredAt: args.occurredAt,
+    customerId: args.customerId,
     items,
     discount: args.discount === undefined ? undefined : Number(args.discount),
     tax: args.tax === undefined ? undefined : Number(args.tax),

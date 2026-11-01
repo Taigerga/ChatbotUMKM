@@ -1,8 +1,10 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
+import { CurrentTenant } from "../../common/current-tenant.decorator.js";
 import { JwtAuthGuard } from "../../common/jwt-auth.guard.js";
+import { TenantGuard } from "../../common/tenant.guard.js";
 import { MlService } from "./ml.service.js";
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
 @Controller("ml")
 export class MlController {
   constructor(private readonly ml: MlService) {}
@@ -10,6 +12,11 @@ export class MlController {
   @Get("readiness")
   readiness() {
     return this.ml.readiness();
+  }
+
+  @Get("data-readiness")
+  dataReadiness(@CurrentTenant() tenantId: string) {
+    return this.ml.dataReadiness(tenantId);
   }
 
   @Get("models")

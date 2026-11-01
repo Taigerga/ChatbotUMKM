@@ -17,6 +17,7 @@ const saleItemSchema = {
   type: "object",
   properties: {
     description: { type: "string" },
+    product: { type: "string", description: "Nama atau SKU produk (opsional, untuk menghubungkan item ke katalog)" },
     qty: { type: "integer", minimum: 1 },
     unitPrice: { type: "number", minimum: 0 },
     productId: { type: "string" },
@@ -82,6 +83,7 @@ export const TOOL_SPECS: ToolSpec[] = [
       type: "object",
       properties: {
         occurredAt: { type: "string", description: "Tanggal transaksi ISO 8601" },
+        customer: { type: "string", description: "Nama atau referensi pelanggan (opsional, untuk menghubungkan penjualan ke pelanggan)" },
         items: { type: "array", items: saleItemSchema },
         discount: { type: "number", minimum: 0 },
         tax: { type: "number", minimum: 0 },
@@ -127,6 +129,7 @@ export const TOOL_SPECS: ToolSpec[] = [
       properties: {
         saleId: { type: "string" },
         occurredAt: { type: "string" },
+        customer: { type: "string", description: "Nama atau referensi pelanggan (opsional)" },
         items: { type: "array", items: saleItemSchema },
         discount: { type: "number", minimum: 0 },
         tax: { type: "number", minimum: 0 },
@@ -140,7 +143,50 @@ export const TOOL_SPECS: ToolSpec[] = [
     description: "Usulkan penghapusan penjualan yang sudah ada. Tidak menghapus sebelum dikonfirmasi pemilik toko.",
     parameters: { type: "object", properties: { saleId: { type: "string" } }, required: ["saleId"] },
   },
+  {
+    name: "updateProduct",
+    description: "Usulkan perubahan produk. Tidak menyimpan sebelum dikonfirmasi pemilik toko.",
+    parameters: {
+      type: "object",
+      properties: {
+        productId: { type: "string" },
+        sku: { type: "string" },
+        name: { type: "string" },
+        category: { type: "string" },
+        price: { type: "number", minimum: 0 },
+        cost: { type: "number", minimum: 0 },
+      },
+      required: ["productId"],
+    },
+  },
+  {
+    name: "deleteProduct",
+    description: "Usulkan penghapusan produk. Tidak menghapus sebelum dikonfirmasi pemilik toko.",
+    parameters: { type: "object", properties: { productId: { type: "string" } }, required: ["productId"] },
+  },
+  {
+    name: "updateCustomer",
+    description: "Usulkan perubahan pelanggan. Tidak menyimpan sebelum dikonfirmasi pemilik toko.",
+    parameters: {
+      type: "object",
+      properties: {
+        customerId: { type: "string" },
+        externalRef: { type: "string" },
+        name: { type: "string" },
+        phone: { type: "string" },
+        email: { type: "string" },
+      },
+      required: ["customerId"],
+    },
+  },
+  {
+    name: "deleteCustomer",
+    description: "Usulkan penghapusan pelanggan. Tidak menghapus sebelum dikonfirmasi pemilik toko.",
+    parameters: { type: "object", properties: { customerId: { type: "string" } }, required: ["customerId"] },
+  },
 ];
 
-export const WRITE_TOOLS = new Set(["createSale", "createProduct", "createCustomer", "updateSale", "deleteSale"]);
+export const WRITE_TOOLS = new Set(["createSale", "createProduct", "createCustomer", "updateSale", "deleteSale", "updateProduct", "deleteProduct", "updateCustomer", "deleteCustomer"]);
+
+
 export const READ_TOOLS = new Set(TOOL_SPECS.filter((t) => !WRITE_TOOLS.has(t.name)).map((t) => t.name));
