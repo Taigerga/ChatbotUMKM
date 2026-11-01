@@ -41,12 +41,14 @@ export class SalesController {
     @CurrentTenant() tenantId: string,
     @Query("from") from?: string,
     @Query("to") to?: string,
+    @Query("customerId") customerId?: string,
     @Query("limit") limit?: string,
     @Query("offset") offset?: string,
   ) {
     return this.sales.list(tenantId, {
       from,
       to,
+      customerId,
       limit: limit ? Number(limit) : undefined,
       offset: offset ? Number(offset) : undefined,
     });

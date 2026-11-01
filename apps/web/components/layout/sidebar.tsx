@@ -2,19 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Bot, Boxes, FileUp, LayoutDashboard, Settings, Users, Receipt } from "lucide-react";
 import { cn } from "@workspace/ui/lib/utils";
-
-const NAV = [
-  { href: "/chat", label: "Chatbot", icon: Bot, ready: true },
-  { href: "/overview", label: "Ringkasan", icon: LayoutDashboard, ready: false },
-  { href: "/transactions", label: "Transaksi", icon: Receipt, ready: false },
-  { href: "/products", label: "Produk", icon: Boxes, ready: false },
-  { href: "/customers", label: "Pelanggan", icon: Users, ready: false },
-  { href: "/imports", label: "Impor Data", icon: FileUp, ready: false },
-  { href: "/machine-learning", label: "Machine Learning", icon: BarChart3, ready: false },
-  { href: "/settings", label: "Pengaturan", icon: Settings, ready: false },
-];
+import { NAV } from "./nav-items";
 
 export function Sidebar() {
   const pathname = usePathname();

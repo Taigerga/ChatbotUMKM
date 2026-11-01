@@ -63,3 +63,9 @@ apps/api/src/generated/
 
 # scratch superpowers
 .superpowers/
+
+# log proses lokal (api/ml/mysql)
+*.api.log
+.api*.log
+.ml*.log
+.mysql*.log

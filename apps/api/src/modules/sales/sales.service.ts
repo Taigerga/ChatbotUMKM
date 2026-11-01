@@ -3,7 +3,7 @@ import { PrismaService } from "../../prisma/prisma.service.js";
 import { CreateSaleDto } from "./dto/create-sale.dto.js";
 import { calculateTotals } from "./sale-calculator.js";
 
-export type SaleListQuery = { from?: string; to?: string; limit?: number; offset?: number };
+export type SaleListQuery = { from?: string; to?: string; customerId?: string; limit?: number; offset?: number };
 
 @Injectable()
 export class SalesService {
@@ -173,6 +173,7 @@ export class SalesService {
     if (to && Number.isNaN(to.getTime())) throw new BadRequestException({ code: "INVALID_DATE", message: "Tanggal akhir tidak valid" });
     const where = {
       tenantId,
+      ...(query.customerId ? { customerId: query.customerId } : {}),
       ...(from || to ? { occurredAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } } : {}),
     };
     const [sales, total] = await Promise.all([

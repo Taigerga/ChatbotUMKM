@@ -12,6 +12,11 @@ export class MlController {
     return this.ml.readiness();
   }
 
+  @Get("models")
+  models() {
+    return this.ml.models();
+  }
+
   @Post("train/:model")
   train(@Param("model") model: string) {
     return this.ml.train(model);

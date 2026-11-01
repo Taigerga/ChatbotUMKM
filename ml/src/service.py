@@ -1,17 +1,27 @@
 import os
-import uuid
 import threading
-from fastapi import FastAPI, BackgroundTasks, HTTPException, Header
-from pydantic import BaseModel
+import uuid
 from typing import Any
 
-from src.models import forecasting, rfm, mba, churn, anomaly
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
+from pydantic import BaseModel
+
+from src.metadata import MODELS, describe
+from src.models import anomaly, churn, forecasting, mba, rfm
 
 TOKEN = os.getenv("ML_INTERNAL_TOKEN", "")
 JOBS: dict[str, dict] = {}
 LOCK = threading.Lock()
 
-app = FastAPI(title="ML Service UMKM", version="1.0")
+app = FastAPI(title="ML Service UMKM", version="1.1")
+
+TRAIN_FNS = {
+    "forecasting": forecasting.train,
+    "rfm": rfm.train,
+    "mba": mba.train,
+    "churn": churn.train,
+    "anomaly": anomaly.train,
+}
 
 
 def _auth(token: str | None):
@@ -46,31 +56,34 @@ def health():
 @app.get("/readiness")
 def readiness(x_ml_token: str | None = Header(default=None)):
     _auth(x_ml_token)
-    import os as _os
-    models = ["forecasting", "rfm", "mba", "churn", "anomaly"]
-    out = {}
-    for m in models:
-        path = _os.path.join(os.getenv("ARTIFACT_DIR", "./artifacts"), f"{m}.joblib")
-        out[m] = _os.path.exists(path)
-    return {"models": out}
+    models = {name: describe(name) for name in MODELS}
+    summary = {
+        "ready": sum(1 for m in models.values() if m["status"] == "ready"),
+        "limited": sum(1 for m in models.values() if m["status"] == "limited"),
+        "not_ready": sum(1 for m in models.values() if m["status"] == "not_ready"),
+    }
+    return {"scope": "global", "summary": summary, "models": models}
+
+
+@app.get("/models")
+def models(x_ml_token: str | None = Header(default=None)):
+    _auth(x_ml_token)
+    return {"scope": "global", "models": {name: describe(name) for name in MODELS}}
 
 
 @app.post("/train/{model_name}")
-def train(model_name: str, background_tasks: BackgroundTasks, x_ml_token: str | None = Header(default=None)):
+def train(
+    model_name: str,
+    background_tasks: BackgroundTasks,
+    x_ml_token: str | None = Header(default=None),
+):
     _auth(x_ml_token)
-    fns = {
-        "forecasting": forecasting.train,
-        "rfm": rfm.train,
-        "mba": mba.train,
-        "churn": churn.train,
-        "anomaly": anomaly.train,
-    }
-    if model_name not in fns:
+    if model_name not in TRAIN_FNS:
         raise HTTPException(status_code=404, detail="model tidak dikenal")
     job_id = str(uuid.uuid4())
     with LOCK:
         JOBS[job_id] = {"id": job_id, "status": "running", "result": None, "error": None}
-    background_tasks.add_task(_run_job, job_id, fns[model_name])
+    background_tasks.add_task(_run_job, job_id, TRAIN_FNS[model_name])
     return {"job_id": job_id, "status": "running"}
 
 

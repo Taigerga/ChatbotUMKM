@@ -14,6 +14,10 @@ export class MlService {
     return this.request("/readiness");
   }
 
+  async models() {
+    return this.request("/models");
+  }
+
   async train(model: string) {
     return this.request(`/train/${model}`, { method: "POST" });
   }
