@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
@@ -50,7 +50,6 @@ export default function QuickInputPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const fileRef = useRef<HTMLDivElement>(null);
 
   function updateProduct(field: keyof ProductFields, value: ProductFields[typeof field]) {
     setProduct((p) => ({ ...p, [field]: value }));
@@ -60,11 +59,23 @@ export default function QuickInputPage() {
     setCustomer((c) => ({ ...c, [field]: value }));
   }
 
-  function updateSaleItem(index: number, field: keyof SaleItem, value: string) {
-    setSale((s) => ({
-      ...s,
-      items: s.items.map((item, i) => (i === index ? { ...item, [field]: field === "qty" || field === "description" ? Number(value) : value } : item)),
-    }));\n  }
+  function updateSaleItem(index: number, field: keyof SaleItem, value: string | number) {
+    setSale((s) => {
+      const newItems = s.items.map((item, i) => {
+        if (i === index) {
+          const itemCopy = { ...item } as SaleItem;
+          if (field === "qty" || field === "unitPrice") {
+            itemCopy[field] = Number(value) as SaleItem[typeof field];
+          } else {
+            itemCopy[field] = value as string;
+          }
+          return itemCopy;
+        }
+        return item;
+      });
+      return { ...s, items: newItems };
+    });
+  }
 
   function addSaleItem() {
     setSale((s) => ({ ...s, items: [...s.items, { ...emptySaleItem }] }));
@@ -80,10 +91,8 @@ export default function QuickInputPage() {
     setError(null);
     setMessage(null);
     try {
-      // Build payload with only filled sections
       const payload: any = {};
 
-      // Produk (optional)
       if (product.sku || product.name) {
         const prod = await apiFetch<{ id: string }>("/products", {
           method: "POST",
@@ -101,7 +110,6 @@ export default function QuickInputPage() {
         payload.productId = undefined;
       }
 
-      // Pelanggan (optional)
       if (customer.name || customer.externalRef) {
         const cust = await apiFetch<{ id: string }>("/customers", {
           method: "POST",
@@ -111,14 +119,13 @@ export default function QuickInputPage() {
             phone: customer.phone || undefined,
             email: customer.email || undefined,
           }),
-        );
+        });
         payload.customerId = cust.id;
         setMessage(`Pelanggan ${customer.name} dibuat baru`);
       } else {
         payload.customerId = undefined;
       }
 
-      // Transaksi (wajib)
       const items = sale.items.map((item) => ({
         description: item.description,
         qty: item.qty,
@@ -189,82 +196,26 @@ export default function QuickInputPage() {
           {tab === "product" && (
             <Card className="border-primary/20">
               <CardContent className="grid gap-3">
-                <Input
-                  placeholder="SKU"
-                  value={product.sku}
-                  onChange={(e) => updateProduct("sku", e.target.value)}
-                  required
-                />
-                <Input
-                  placeholder="Nama"
-                  value={product.name}
-                  onChange={(e) => updateProduct("name", e.target.value)}
-                  required
-                />
-                <Input
-                  placeholder="Kategori"
-                  value={product.category}
-                  onChange={(e) => updateProduct("category", e.target.value)}
-                />
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="Harga"
-                  value={product.price}
-                  onChange={(e) => updateProduct("price", Number(e.target.value))}
-                  required
-                />
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="Biaya"
-                  value={product.cost}
-                  onChange={(e) => updateProduct("cost", e.target.value === "" ? null : Number(e.target.value))}
-                />
-                <Button
-                  type="button"
-                  onClick={resetForm}
-                  className="mt-2 w-full"
-                  disabled={busy}
-                >
+                <Input placeholder="SKU" value={product.sku} onChange={(e) => updateProduct("sku", e.target.value)} required />
+                <Input placeholder="Nama" value={product.name} onChange={(e) => updateProduct("name", e.target.value)} required />
+                <Input placeholder="Kategori" value={product.category} onChange={(e) => updateProduct("category", e.target.value)} />
+                <Input type="number" min="0" placeholder="Harga" value={product.price} onChange={(e) => updateProduct("price", Number(e.target.value))} required />
+                <Input type="number" min="0" placeholder="Biaya" value={product.cost ?? ""} onChange={(e) => updateProduct("cost", e.target.value === "" ? null : Number(e.target.value))} />
+                <Button type="button" onClick={resetForm} className="mt-2 w-full" disabled={busy}>
                   {busy ? "Menyimpan..." : "Batal"}
                 </Button>
               </CardContent>
             </Card>
-          }}
+          )}
 
           {tab === "customer" && (
             <Card className="border-primary/20">
               <CardContent className="grid gap-3">
-                <Input
-                  placeholder="Referensi"
-                  value={customer.externalRef}
-                  onChange={(e) => updateCustomer("externalRef", e.target.value)}
-                  required
-                />
-                <Input
-                  placeholder="Nama"
-                  value={customer.name}
-                  onChange={(e) => updateCustomer("name", e.target.value)}
-                  required
-                />
-                <Input
-                  placeholder="Telepon"
-                  value={customer.phone ?? ""}
-                  onChange={(e) => updateCustomer("phone", e.target.value || null)}
-                />
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={customer.email ?? ""}
-                  onChange={(e) => updateCustomer("email", e.target.value || null)}
-                />
-                <Button
-                  type="button"
-                  onClick={resetForm}
-                  className="mt-2 w-full"
-                  disabled={busy}
-                >
+                <Input placeholder="Referensi" value={customer.externalRef} onChange={(e) => updateCustomer("externalRef", e.target.value)} required />
+                <Input placeholder="Nama" value={customer.name} onChange={(e) => updateCustomer("name", e.target.value)} required />
+                <Input placeholder="Telepon" value={customer.phone ?? ""} onChange={(e) => updateCustomer("phone", e.target.value || null)} />
+                <Input type="email" placeholder="Email" value={customer.email ?? ""} onChange={(e) => updateCustomer("email", e.target.value || null)} />
+                <Button type="button" onClick={resetForm} className="mt-2 w-full" disabled={busy}>
                   {busy ? "Menyimpan..." : "Batal"}
                 </Button>
               </CardContent>
@@ -275,75 +226,24 @@ export default function QuickInputPage() {
             <Card className="border-primary/20">
               <CardContent className="grid gap-4">
                 <div className="grid gap-2 md:grid-cols-3">
-                  <Input
-                    type="datetime-local"
-                    placeholder="Tanggal & jam"
-                    value={sale.occurredAt}
-                    onChange={(e) => setSale((s) => ({ ...s, occurredAt: e.target.value }))}
-                    required
-                  />
-                  <Input
-                    placeholder="ID pelanggan (opsional)"
-                    value={sale.customerId ?? ""}
-                    onChange={(e) => setSale((s) => ({ ...s, customerId: e.target.value || undefined }))} 
-                  />
-                  <Input
-                    placeholder="Catatan (opsional)"
-                    value={sale.notes ?? ""}
-                    onChange={(e) => setSale({ ...s, notes: e.target.value || undefined })} 
-                  />
+                  <Input type="datetime-local" placeholder="Tanggal & jam" value={sale.occurredAt} onChange={(e) => setSale((s) => ({ ...s, occurredAt: e.target.value }))} required />
+                  <Input placeholder="ID pelanggan (opsional)" value={sale.customerId ?? ""} onChange={(e) => setSale((s) => ({ ...s, customerId: e.target.value || null }))} />
+                  <Input placeholder="Catatan (opsional)" value={sale.notes ?? ""} onChange={(e) => setSale((s) => ({ ...s, notes: e.target.value || null }))} />
                 </div>
 
                 <div className="grid gap-2">
                   {sale.items.map((item, index) => (
                     <div key={index} className="grid gap-2 md:grid-cols-4 border rounded p-2">
-                      <Input
-                        placeholder="Deskripsi"
-                        value={item.description}
-                        onChange={(e) => updateSaleItem(index, "description", e.target.value)}
-                        required
-                      />
-                      <Input
-                        type="number"
-                        min="1"
-                        placeholder="Qty"
-                        value={item.qty}
-                        onChange={(e) => updateSaleItem(index, "qty", e.target.value)}
-                        required
-                      />
-                      <Input
-                        type="number"
-                        min="0"
-                        placeholder="Harga satuan"
-                        value={item.unitPrice}
-                        onChange={(e) => updateSaleItem(index, "unitPrice", e.target.value)}
-                        required
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeSaleItem(index)}
-                      >
-                        Hapus
-                      </Button>
+                      <Input placeholder="Deskripsi" value={item.description} onChange={(e) => updateSaleItem(index, "description", e.target.value)} required />
+                      <Input type="number" min="1" placeholder="Qty" value={item.qty} onChange={(e) => updateSaleItem(index, "qty", e.target.value)} required />
+                      <Input type="number" min="0" placeholder="Harga satuan" value={item.unitPrice} onChange={(e) => updateSaleItem(index, "unitPrice", e.target.value)} required />
+                      <Button variant="outline" size="sm" onClick={() => removeSaleItem(index)}>Hapus</Button>
                     </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={addSaleItem}
-                    className="mt-2"
-                  >
-                    Tambah item
-                  </Button>
+                  ))}
+                  <Button variant="outline" size="sm" onClick={addSaleItem} className="mt-2">Tambah item</Button>
                 </div>
 
-                <Button
-                  type="submit"
-                  onClick={submitForm}
-                  disabled={busy}
-                  className="mt-3 w-full"
-                >
+                <Button type="submit" onClick={submitForm} disabled={busy} className="mt-3 w-full">
                   {busy ? "Menyimpan..." : "Simpan Transaksi"}
                 </Button>
               </CardContent>
