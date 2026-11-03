@@ -9,8 +9,9 @@ import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { randomUUID } from "node:crypto";
 import { PrismaService } from "../../prisma/prisma.service.js";
+import { AiConfigService } from "../ai-config/ai-config.service.js";
 import { AiProviderService } from "../ai-provider/ai-provider.service.js";
-import type { ChatTurn, CompletionRequest } from "../ai-provider/provider.interface.js";
+import type { AiProvider, ChatTurn, CompletionRequest, CompletionResult } from "../ai-provider/provider.interface.js";
 import { ProviderError } from "../ai-provider/provider.interface.js";
 import { CreateCustomerDto } from "../customers/dto/customer.dto.js";
 import { CustomersService } from "../customers/customers.service.js";
@@ -30,23 +31,26 @@ export class ChatService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly provider: AiProviderService,
+    private readonly aiConfig: AiConfigService,
     private readonly readTools: ChatReadTools,
     private readonly sales: SalesService,
     private readonly products: ProductsService,
     private readonly customers: CustomersService,
   ) {}
 
-  async send(tenantId: string, userId: string, dto: SendMessageDto) {
+  async send(tenantId: string, userId: string, dto: SendMessageDto, aiMode: "default" | "personal" = "default") {
     const conversation = dto.conversationId
       ? await this.prisma.chatConversation.findFirst({ where: { id: dto.conversationId, tenantId, userId } })
       : await this.prisma.chatConversation.create({ data: { tenantId, userId, title: dto.message.slice(0, 60) } });
     if (!conversation) throw new NotFoundException({ code: "CONVERSATION_NOT_FOUND", message: "Percakapan tidak ditemukan" });
 
+    const completer = await this.resolveCompleter(userId, aiMode);
+
     await this.prisma.chatMessage.create({ data: { conversationId: conversation.id, role: "user", content: dto.message } });
     const turns = await this.loadTurns(conversation.id);
 
     for (let loop = 0; loop < 5; loop++) {
-      const completion = await this.completeWithFriendlyError({ system: SYSTEM_PROMPT, messages: turns, tools: TOOL_SPECS });
+      const completion = await this.completeWithFriendlyError(completer, { system: SYSTEM_PROMPT, messages: turns, tools: TOOL_SPECS });
       const write = completion.toolCalls.find((call) => WRITE_TOOLS.has(call.name));
       if (write) return this.propose(tenantId, conversation.id, write.name, write.arguments, completion.text);
 
@@ -71,13 +75,25 @@ export class ChatService {
     return { conversationId: conversation.id, reply };
   }
 
-  private async completeWithFriendlyError(request: CompletionRequest) {
+  private async resolveCompleter(userId: string, aiMode: "default" | "personal"): Promise<{ complete(request: CompletionRequest): Promise<CompletionResult> }> {
+    if (aiMode === "default") return this.provider;
+    const provider = await this.aiConfig.getProviderForUser(userId);
+    if (!provider) {
+      throw new BadRequestException({ code: "AI_CONFIG_MISSING", message: "AI pribadi belum dikonfigurasi. Buka Pengaturan → AI Pribadi." });
+    }
+    return provider;
+  }
+
+  private async completeWithFriendlyError(completer: { complete(request: CompletionRequest): Promise<CompletionResult> }, request: CompletionRequest) {
     try {
-      return await this.provider.complete(request);
+      return await completer.complete(request);
     } catch (error) {
       if (error instanceof ProviderError) {
         if (error.code === "BAD_REQUEST") {
           throw new BadRequestException({ code: "AI_BAD_REQUEST", message: error.message });
+        }
+        if (error.code === "AUTH") {
+          throw new BadRequestException({ code: "AI_AUTH", message: "API Key tidak valid atau tidak memiliki akses" });
         }
         throw new ServiceUnavailableException({ code: "AI_UNAVAILABLE", message: error.message });
       }
@@ -209,25 +225,42 @@ export class ChatService {
     return { status: "cancelled" };
   }
 
-  async listConversations(tenantId: string, userId: string, limit = 30, offset = 0) {
+  async listConversations(tenantId: string, userId: string, limit = 30, offset = 0, q?: string) {
     const take = Math.min(Math.max(limit || 30, 1), 100);
     const skip = Math.max(offset || 0, 0);
+    const search = q?.trim().slice(0, 120);
+    const where: any = { tenantId, userId };
+    if (search) {
+      where.OR = [
+        { title: { contains: search } },
+        { messages: { some: { content: { contains: search } } } },
+      ];
+    }
     const [items, total] = await Promise.all([
       this.prisma.chatConversation.findMany({
-        where: { tenantId, userId },
-        orderBy: { updatedAt: "desc" },
+        where,
+        orderBy: [{ pinned: "desc" }, { updatedAt: "desc" }],
         take,
         skip,
-        select: { id: true, title: true, updatedAt: true, _count: { select: { messages: true } } },
+        select: { id: true, title: true, pinned: true, updatedAt: true, _count: { select: { messages: true } } },
       }),
-      this.prisma.chatConversation.count({ where: { tenantId, userId } }),
+      this.prisma.chatConversation.count({ where }),
     ]);
     return {
-      items: items.map((c) => ({ id: c.id, title: c.title ?? "Percakapan", updatedAt: c.updatedAt, messageCount: c._count.messages })),
+      items: items.map((c) => ({ id: c.id, title: c.title ?? "Percakapan", pinned: c.pinned, updatedAt: c.updatedAt, messageCount: c._count.messages })),
       total,
       limit: take,
       offset: skip,
     };
+  }
+
+  async pinConversation(tenantId: string, userId: string, id: string, pinned: boolean) {
+    const updated = await this.prisma.chatConversation.updateMany({
+      where: { id, tenantId, userId },
+      data: { pinned },
+    });
+    if (updated.count === 0) throw new NotFoundException({ code: "CONVERSATION_NOT_FOUND", message: "Percakapan tidak ditemukan" });
+    return { ok: true, pinned };
   }
 
   async getConversation(tenantId: string, userId: string, id: string) {

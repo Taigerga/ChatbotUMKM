@@ -13,7 +13,7 @@ export class ChatController {
 
   @Post("messages")
   send(@CurrentUser() auth: AuthContext, @CurrentTenant() tenantId: string, @Body() dto: SendMessageDto) {
-    return this.chat.send(tenantId, auth.userId, dto);
+    return this.chat.send(tenantId, auth.userId, dto, dto.aiMode ?? "default");
   }
 
   @Post("actions/:id/confirm")
@@ -32,8 +32,9 @@ export class ChatController {
     @CurrentTenant() tenantId: string,
     @Query("limit") limit?: string,
     @Query("offset") offset?: string,
+    @Query("q") q?: string,
   ) {
-    return this.chat.listConversations(tenantId, auth.userId, limit ? Number(limit) : undefined, offset ? Number(offset) : undefined);
+    return this.chat.listConversations(tenantId, auth.userId, limit ? Number(limit) : undefined, offset ? Number(offset) : undefined, q);
   }
 
   @Get("conversations/:id")
@@ -49,6 +50,16 @@ export class ChatController {
     @Body() body: { title?: string },
   ) {
     return this.chat.renameConversation(tenantId, auth.userId, id, body?.title);
+  }
+
+  @Patch("conversations/:id/pin")
+  pinConversation(
+    @CurrentUser() auth: AuthContext,
+    @CurrentTenant() tenantId: string,
+    @Param("id") id: string,
+    @Body() body: { pinned?: boolean },
+  ) {
+    return this.chat.pinConversation(tenantId, auth.userId, id, body?.pinned !== false);
   }
 
   @Delete("conversations/:id")

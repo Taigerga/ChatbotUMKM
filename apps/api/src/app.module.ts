@@ -15,6 +15,7 @@ import { CustomersModule } from './modules/customers/customers.module.js';
 import { OverviewModule } from './modules/overview/overview.module.js';
 import { ImportsModule } from './modules/imports/imports.module.js';
 import { MlModule } from './modules/ml/ml.module.js';
+import { AiConfigModule } from './modules/ai-config/ai-config.module.js';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { MlModule } from './modules/ml/ml.module.js';
     OverviewModule,
     ImportsModule,
     MlModule,
+    AiConfigModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

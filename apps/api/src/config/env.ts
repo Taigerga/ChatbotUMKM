@@ -16,6 +16,7 @@ export type Env = {
   OPENAI_COMPAT_MODEL?: string;
   OPENAI_COMPAT_MODELS?: string;
   AI_TIMEOUT_MS: number;
+  AI_CONFIG_ENCRYPTION_KEY?: string;
   ML_SERVICE_URL: string;
   ML_INTERNAL_TOKEN: string;
 };
@@ -48,6 +49,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     OPENAI_COMPAT_MODEL: source.OPENAI_COMPAT_MODEL,
     OPENAI_COMPAT_MODELS: source.OPENAI_COMPAT_MODELS,
     AI_TIMEOUT_MS: positiveInt(source.AI_TIMEOUT_MS, 120_000),
+    AI_CONFIG_ENCRYPTION_KEY: source.AI_CONFIG_ENCRYPTION_KEY,
     ML_SERVICE_URL: source.ML_SERVICE_URL ?? "http://127.0.0.1:8001",
     ML_INTERNAL_TOKEN: source.ML_INTERNAL_TOKEN ?? "",
   };

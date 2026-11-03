@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { ChatEmptyState } from "@/components/chat/empty-state";
 import { ChatComposer } from "@/components/chat/composer";
@@ -29,6 +30,8 @@ type ConversationDetail = {
   }[];
 };
 
+type AiConfigSummary = { configured: boolean };
+
 function lastKey(tenantId: string) {
   return `chat:last:${tenantId}`;
 }
@@ -40,10 +43,15 @@ export default function ChatPage() {
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [aiMode, setAiMode] = useState<"default" | "personal">("default");
+  const [personalConfigured, setPersonalConfigured] = useState(false);
 
-  const loadConversations = useCallback(async () => {
+  const loadConversations = useCallback(async (q?: string) => {
     try {
-      const res = await apiFetch<{ items: ConversationSummary[] }>("/chat/conversations?limit=40");
+      const params = new URLSearchParams({ limit: "40" });
+      if (q?.trim()) params.set("q", q.trim());
+      const res = await apiFetch<{ items: ConversationSummary[] }>(`/chat/conversations?${params.toString()}`);
       setConversations(res.items);
     } catch {
       setConversations([]);
@@ -70,6 +78,16 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
+    try {
+      const savedMode = window.localStorage.getItem("chat:aiMode");
+      if (savedMode === "personal" || savedMode === "default") setAiMode(savedMode);
+    } catch {
+      // ignore
+    }
+    apiFetch<AiConfigSummary>("/ai-config")
+      .then((data) => setPersonalConfigured(data.configured))
+      .catch(() => setPersonalConfigured(false));
+
     loadConversations().then(() => {
       const tenantId = typeof window === "undefined" ? null : window.localStorage.getItem("tenantId");
       const saved = tenantId ? window.localStorage.getItem(lastKey(tenantId)) : null;
@@ -77,11 +95,44 @@ export default function ChatPage() {
     });
   }, [loadConversations, loadConversation]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => loadConversations(search), 300);
+    return () => clearTimeout(timer);
+  }, [search, loadConversations]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("chat:aiMode", aiMode);
+    } catch {
+      // ignore
+    }
+  }, [aiMode]);
+
   function startNew() {
     setConversationId(undefined);
     setMessages([]);
     const tenantId = typeof window === "undefined" ? null : window.localStorage.getItem("tenantId");
     if (tenantId) window.localStorage.removeItem(lastKey(tenantId));
+  }
+
+  async function handlePin(id: string, pinned: boolean) {
+    try {
+      await apiFetch(`/chat/conversations/${id}/pin`, { method: "PATCH", body: JSON.stringify({ pinned }) });
+      await loadConversations(search);
+    } catch {
+      // ignore
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("Hapus percakapan ini?")) return;
+    try {
+      await apiFetch(`/chat/conversations/${id}`, { method: "DELETE" });
+      if (id === conversationId) startNew();
+      await loadConversations(search);
+    } catch {
+      // ignore
+    }
   }
 
   async function send(text: string) {
@@ -94,7 +145,7 @@ export default function ChatPage() {
     try {
       const result = await apiFetch<SendMessageResponse>("/chat/messages", {
         method: "POST",
-        body: JSON.stringify({ message: trimmed, conversationId }),
+        body: JSON.stringify({ message: trimmed, conversationId, aiMode }),
       });
       setConversationId(result.conversationId);
       const tenantId = typeof window === "undefined" ? null : window.localStorage.getItem("tenantId");
@@ -114,7 +165,7 @@ export default function ChatPage() {
           : undefined,
       };
       setMessages((prev) => [...prev, assistantMessage]);
-      await loadConversations();
+      await loadConversations(search);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
@@ -139,23 +190,14 @@ export default function ChatPage() {
     );
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("Hapus percakapan ini?")) return;
-    try {
-      await apiFetch(`/chat/conversations/${id}`, { method: "DELETE" });
-      if (id === conversationId) startNew();
-      await loadConversations();
-    } catch {
-      // ignore
-    }
-  }
-
   return (
     <div className="flex h-[calc(100vh-57px)]">
       <div className={`${panelOpen ? "block" : "hidden"} w-72 shrink-0 md:block`}>
         <HistoryPanel
           conversations={conversations}
           activeId={conversationId}
+          query={search}
+          onQueryChange={setSearch}
           onSelect={(id) => {
             loadConversation(id);
             setPanelOpen(false);
@@ -164,6 +206,7 @@ export default function ChatPage() {
             startNew();
             setPanelOpen(false);
           }}
+          onPin={handlePin}
           onDelete={handleDelete}
           busy={busy}
         />
@@ -177,7 +220,25 @@ export default function ChatPage() {
           >
             {panelOpen ? "Tutup riwayat" : "Riwayat chat"}
           </button>
-          <span className="text-muted-foreground text-xs">Panel chat</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
+          <span className="text-muted-foreground text-xs">Model:</span>
+          <select
+            value={aiMode}
+            onChange={(e) => setAiMode(e.target.value as "default" | "personal")}
+            disabled={aiMode === "personal" ? false : false}
+            className="rounded-md border bg-background px-2 py-1 text-xs"
+          >
+            <option value="default">Default aplikasi</option>
+            <option value="personal" disabled={!personalConfigured}>
+              AI pribadi{personalConfigured ? "" : " (belum diatur)"}
+            </option>
+          </select>
+          {!personalConfigured && (
+            <Link href="/settings" className="text-primary text-xs underline">
+              Atur AI pribadi
+            </Link>
+          )}
         </div>
         {messages.length === 0 ? (
           <ChatEmptyState onPick={send} />
