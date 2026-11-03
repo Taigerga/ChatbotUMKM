@@ -1,10 +1,17 @@
-﻿import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+﻿import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { randomUUID } from "node:crypto";
 import { PrismaService } from "../../prisma/prisma.service.js";
 import { AiProviderService } from "../ai-provider/ai-provider.service.js";
-import type { ChatTurn } from "../ai-provider/provider.interface.js";
+import type { ChatTurn, CompletionRequest } from "../ai-provider/provider.interface.js";
+import { ProviderError } from "../ai-provider/provider.interface.js";
 import { CreateCustomerDto } from "../customers/dto/customer.dto.js";
 import { CustomersService } from "../customers/customers.service.js";
 import { CreateProductDto } from "../products/dto/product.dto.js";
@@ -39,7 +46,7 @@ export class ChatService {
     const turns = await this.loadTurns(conversation.id);
 
     for (let loop = 0; loop < 5; loop++) {
-      const completion = await this.provider.complete({ system: SYSTEM_PROMPT, messages: turns, tools: TOOL_SPECS });
+      const completion = await this.completeWithFriendlyError({ system: SYSTEM_PROMPT, messages: turns, tools: TOOL_SPECS });
       const write = completion.toolCalls.find((call) => WRITE_TOOLS.has(call.name));
       if (write) return this.propose(tenantId, conversation.id, write.name, write.arguments, completion.text);
 
@@ -62,6 +69,20 @@ export class ChatService {
     const reply = "Saya butuh informasi tambahan yang lebih spesifik. Bisa dijelaskan ulang?";
     await this.prisma.chatMessage.create({ data: { conversationId: conversation.id, role: "assistant", content: reply } });
     return { conversationId: conversation.id, reply };
+  }
+
+  private async completeWithFriendlyError(request: CompletionRequest) {
+    try {
+      return await this.provider.complete(request);
+    } catch (error) {
+      if (error instanceof ProviderError) {
+        if (error.code === "BAD_REQUEST") {
+          throw new BadRequestException({ code: "AI_BAD_REQUEST", message: error.message });
+        }
+        throw new ServiceUnavailableException({ code: "AI_UNAVAILABLE", message: error.message });
+      }
+      throw error;
+    }
   }
 
   async confirm(tenantId: string, userId: string, actionId: string) {
