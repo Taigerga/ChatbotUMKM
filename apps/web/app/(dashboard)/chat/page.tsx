@@ -7,6 +7,7 @@ import { ChatEmptyState } from "@/components/chat/empty-state";
 import { ChatComposer } from "@/components/chat/composer";
 import { MessageList, type ChatMessage } from "@/components/chat/message-list";
 import { HistoryPanel, type ConversationSummary } from "@/components/chat/history-panel";
+import { ConfirmDialog } from "@/components/common/confirm-dialog";
 
 type SendMessageResponse = {
   conversationId: string;
@@ -46,6 +47,9 @@ export default function ChatPage() {
   const [search, setSearch] = useState("");
   const [aiMode, setAiMode] = useState<"default" | "personal">("default");
   const [personalConfigured, setPersonalConfigured] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const loadConversations = useCallback(async (q?: string) => {
     try {
@@ -125,13 +129,23 @@ export default function ChatPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Hapus percakapan ini?")) return;
+    setDeleteTargetId(id);
+    setDeleteDialogOpen(true);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTargetId) return;
+    setDeleteLoading(true);
     try {
-      await apiFetch(`/chat/conversations/${id}`, { method: "DELETE" });
-      if (id === conversationId) startNew();
+      await apiFetch(`/chat/conversations/${deleteTargetId}`, { method: "DELETE" });
+      if (deleteTargetId === conversationId) startNew();
       await loadConversations(search);
-    } catch {
-      // ignore
+      setDeleteDialogOpen(false);
+      setDeleteTargetId(null);
+    } catch (err) {
+      // error handled by apiFetch, silently fail for now
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -191,7 +205,19 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-57px)]">
+    <>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Hapus percakapan"
+        description="Percakapan ini akan dihapus permanen. Tindakan tidak bisa dibatalkan."
+        onConfirm={confirmDelete}
+        confirmLabel="Hapus"
+        cancelLabel="Batalkan"
+        loading={deleteLoading}
+        variant="destructive"
+      />
+      <div className="flex h-[calc(100vh-57px)]">
       <div className={`${panelOpen ? "block" : "hidden"} w-72 shrink-0 md:block`}>
         <HistoryPanel
           conversations={conversations}
@@ -248,5 +274,6 @@ export default function ChatPage() {
         <ChatComposer value={input} onChange={setInput} onSend={() => send(input)} busy={busy} />
       </div>
     </div>
+    </>
   );
 }

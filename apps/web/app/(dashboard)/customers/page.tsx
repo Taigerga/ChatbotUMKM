@@ -7,6 +7,7 @@ import { DataPagination } from "@/components/data-pagination";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
+import { ConfirmDialog } from "@/components/common/confirm-dialog";
 
 type Customer = { id: string; externalRef: string; name: string; phone: string | null; email: string | null };
 type Sale = { id: string; occurredAt: string; total: string };
@@ -25,6 +26,9 @@ export default function CustomersPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<{ customer: Customer; sales: Sale[] } | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -97,18 +101,40 @@ export default function CustomersPage() {
   }
 
   async function remove(customer: Customer) {
-    if (!confirm(`Hapus pelanggan "${customer.name}"?`)) return;
+    setDeleteTarget(customer);
+    setDeleteDialogOpen(true);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
     try {
-      await apiFetch(`/customers/${customer.id}`, { method: "DELETE" });
-      if (detail?.customer.id === customer.id) setDetail(null);
+      await apiFetch(`/customers/${deleteTarget.id}`, { method: "DELETE" });
+      if (detail?.customer.id === deleteTarget.id) setDetail(null);
       await load();
+      setDeleteDialogOpen(false);
+      setDeleteTarget(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal menghapus pelanggan.");
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
   return (
-    <div className="grid gap-4 p-4 dash-stagger">
+    <>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={`Hapus pelanggan "${deleteTarget?.name}"`}
+        description="Pelanggan ini akan dihapus permanen. Tindakan tidak bisa dibatalkan."
+        onConfirm={confirmDelete}
+        confirmLabel="Hapus"
+        cancelLabel="Batalkan"
+        loading={deleteLoading}
+        variant="destructive"
+      />
+      <div className="grid gap-4 p-4 dash-stagger">
       <Card>
         <CardHeader><CardTitle>Pelanggan ({total})</CardTitle></CardHeader>
         <CardContent className="grid gap-3">
@@ -193,5 +219,6 @@ export default function CustomersPage() {
         </Card>
       )}
     </div>
+    </>
   );
 }

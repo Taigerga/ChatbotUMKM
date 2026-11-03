@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@work
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { usePreferences, type TextSize, type Density } from "@/components/preferences-provider";
+import { ConfirmDialog } from "@/components/common/confirm-dialog";
 
 const TEXT_SIZES: { value: TextSize; label: string; sample: string }[] = [
   { value: "sm", label: "Kecil", sample: "Aa" },
@@ -43,6 +44,8 @@ export default function SettingsPage() {
   const [aiBusy, setAiBusy] = useState(false);
   const [aiMessage, setAiMessage] = useState<string | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   async function loadAiConfig() {
     try {
@@ -99,8 +102,11 @@ export default function SettingsPage() {
   }
 
   async function removeAiConfig() {
-    if (!confirm("Hapus konfigurasi AI pribadi?")) return;
-    setAiBusy(true);
+    setDeleteDialogOpen(true);
+  }
+
+  async function confirmDelete() {
+    setDeleteLoading(true);
     setAiError(null);
     setAiMessage(null);
     try {
@@ -110,10 +116,11 @@ export default function SettingsPage() {
       setApiKey("");
       setAiMessage("Konfigurasi AI dihapus.");
       await loadAiConfig();
+      setDeleteDialogOpen(false);
     } catch (err) {
       setAiError(err instanceof Error ? err.message : "Gagal menghapus konfigurasi.");
     } finally {
-      setAiBusy(false);
+      setDeleteLoading(false);
     }
   }
 
@@ -121,7 +128,19 @@ export default function SettingsPage() {
   const canTest = model.trim().length > 0 && apiKey.trim().length >= 8;
 
   return (
-    <div className="grid gap-4 p-4 dash-stagger">
+    <>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Hapus konfigurasi AI pribadi"
+        description="Konfigurasi AI pribadi Anda akan dihapus. Chatbot kembali menggunakan AI aplikasi default."
+        onConfirm={confirmDelete}
+        confirmLabel="Hapus"
+        cancelLabel="Batalkan"
+        loading={deleteLoading}
+        variant="destructive"
+      />
+      <div className="grid gap-4 p-4 dash-stagger">
       <div className="dash-enter">
         <h1 className="text-2xl font-semibold tracking-tight">Pengaturan</h1>
         <p className="text-muted-foreground text-sm">
@@ -352,6 +371,7 @@ export default function SettingsPage() {
           Reset tampilan ke default
         </Button>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

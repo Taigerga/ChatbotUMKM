@@ -7,6 +7,7 @@ import { DataPagination } from "@/components/data-pagination";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
+import { ConfirmDialog } from "@/components/common/confirm-dialog";
 
 type Product = { id: string; sku: string; name: string; category: string | null; price: string; cost: string | null };
 type FormState = { sku: string; name: string; category: string; price: string; cost: string };
@@ -23,6 +24,9 @@ export default function ProductsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -87,17 +91,39 @@ export default function ProductsPage() {
   }
 
   async function remove(product: Product) {
-    if (!confirm(`Hapus produk "${product.name}"?`)) return;
+    setDeleteTarget(product);
+    setDeleteDialogOpen(true);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
     try {
-      await apiFetch(`/products/${product.id}`, { method: "DELETE" });
+      await apiFetch(`/products/${deleteTarget.id}`, { method: "DELETE" });
       await load();
+      setDeleteDialogOpen(false);
+      setDeleteTarget(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal menghapus produk.");
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
   return (
-    <div className="grid gap-4 p-4 dash-stagger">
+    <>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={`Hapus produk "${deleteTarget?.name}"`}
+        description="Produk ini akan dihapus permanen. Tindakan tidak bisa dibatalkan."
+        onConfirm={confirmDelete}
+        confirmLabel="Hapus"
+        cancelLabel="Batalkan"
+        loading={deleteLoading}
+        variant="destructive"
+      />
+      <div className="grid gap-4 p-4 dash-stagger">
       <Card>
         <CardHeader><CardTitle>Produk ({total})</CardTitle></CardHeader>
         <CardContent className="grid gap-3">
@@ -157,5 +183,6 @@ export default function ProductsPage() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

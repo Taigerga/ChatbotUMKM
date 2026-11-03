@@ -8,6 +8,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
+import { ConfirmDialog } from "@/components/common/confirm-dialog";
 
 type SaleItem = { id: string; description: string; qty: number; unitPrice: string; lineTotal: string };
 type Sale = {
@@ -50,6 +51,9 @@ export default function TransactionsPage() {
     notes: "",
     items: [{ ...emptyItem }] as FormItem[],
   });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -139,17 +143,39 @@ export default function TransactionsPage() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Hapus transaksi ini? Tindakan tidak bisa dibatalkan.")) return;
+    setDeleteTargetId(id);
+    setDeleteDialogOpen(true);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTargetId) return;
+    setDeleteLoading(true);
     try {
-      await apiFetch(`/sales/${id}`, { method: "DELETE" });
+      await apiFetch(`/sales/${deleteTargetId}`, { method: "DELETE" });
       await load();
+      setDeleteDialogOpen(false);
+      setDeleteTargetId(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal menghapus transaksi.");
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
   return (
-    <div className="grid gap-4 p-4 dash-stagger">
+    <>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Hapus transaksi"
+        description="Transaksi ini akan dihapus permanen. Tindakan tidak bisa dibatalkan."
+        onConfirm={confirmDelete}
+        confirmLabel="Hapus"
+        cancelLabel="Batalkan"
+        loading={deleteLoading}
+        variant="destructive"
+      />
+      <div className="grid gap-4 p-4 dash-stagger">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle>Transaksi ({total})</CardTitle>
@@ -287,6 +313,7 @@ export default function TransactionsPage() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }
 
