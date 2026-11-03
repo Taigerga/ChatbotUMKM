@@ -48,6 +48,15 @@
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
     --font-sans: var(--font-sans);
+    --font-display: var(--font-display);
+    --color-mk-cream: var(--mk-cream);
+    --color-mk-surface: var(--mk-surface);
+    --color-mk-ink: var(--mk-ink);
+    --color-mk-muted: var(--mk-muted);
+    --color-mk-brand: var(--mk-brand);
+    --color-mk-brand-deep: var(--mk-brand-deep);
+    --color-mk-clay: var(--mk-clay);
+    --color-mk-line: var(--mk-line);
 }
 
 :root {

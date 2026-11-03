@@ -1,0 +1,223 @@
+/* Palet & animasi khusus halaman marketing. Dashboard tetap pakai token netral. */
+
+.mk {
+  --mk-cream: oklch(0.974 0.018 84);
+  --mk-surface: oklch(0.995 0.008 84);
+  --mk-ink: oklch(0.215 0.024 60);
+  --mk-muted: oklch(0.47 0.03 60);
+  --mk-brand: oklch(0.745 0.157 62);
+  --mk-brand-deep: oklch(0.545 0.145 45);
+  --mk-clay: oklch(0.7 0.088 32);
+  --mk-line: oklch(0.215 0.024 60 / 0.14);
+  background-color: var(--mk-cream);
+  color: var(--mk-ink);
+}
+
+.dark .mk {
+  --mk-cream: oklch(0.185 0.016 60);
+  --mk-surface: oklch(0.225 0.018 60);
+  --mk-ink: oklch(0.955 0.012 84);
+  --mk-muted: oklch(0.74 0.02 70);
+  --mk-brand: oklch(0.79 0.155 68);
+  --mk-brand-deep: oklch(0.65 0.15 52);
+  --mk-clay: oklch(0.66 0.08 32);
+  --mk-line: oklch(0.955 0.012 84 / 0.16);
+}
+
+/* Tekstur kertas halus, ditempel di belakang konten. */
+.mk-grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E");
+}
+
+.mk-halo {
+  background:
+    radial-gradient(60% 50% at 80% 0%, color-mix(in oklch, var(--mk-brand) 30%, transparent), transparent 70%),
+    radial-gradient(45% 40% at 10% 10%, color-mix(in oklch, var(--mk-clay) 26%, transparent), transparent 70%);
+}
+
+.mk-display {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 0.98;
+}
+
+.mk-eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--mk-muted);
+}
+
+/* Kartu bertumpuk ala nota kertas. */
+.mk-card {
+  border: 1px solid var(--mk-line);
+  border-radius: 1.25rem;
+  background: var(--mk-surface);
+  box-shadow: 0 1px 0 var(--mk-line), 0 18px 40px -32px oklch(0.2 0.03 60 / 0.55);
+}
+
+/* Kartu gelap tetap gelap di kedua tema. */
+.mk-card-ink {
+  border: 1px solid color-mix(in oklch, var(--mk-brand) 32%, transparent);
+  border-radius: 1.25rem;
+  background: oklch(0.215 0.024 60);
+  color: oklch(0.974 0.018 84);
+  box-shadow: 0 1px 0 oklch(0.974 0.018 84 / 0.12), 0 24px 50px -36px oklch(0.2 0.03 60 / 0.8);
+}
+
+.mk-card-ink .mk-meter {
+  background: oklch(0.974 0.018 84 / 0.18);
+}
+
+.mk-chip {
+  border: 1px solid var(--mk-line);
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--mk-surface) 78%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.mk-link {
+  position: relative;
+  transition: color 160ms ease;
+}
+
+.mk-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 1px;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: currentColor;
+  transition: transform 220ms ease;
+}
+
+.mk-link:hover::after,
+.mk-link[data-active="true"]::after {
+  transform: scaleX(1);
+}
+
+@keyframes mk-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes mk-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mk-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes mk-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes mk-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--mk-brand) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 14px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.mk-enter {
+  animation: mk-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mk-fade {
+  animation: mk-fade 900ms ease both;
+}
+
+.mk-float {
+  animation: mk-float 6s ease-in-out infinite;
+}
+
+.mk-pulse {
+  animation: mk-pulse-ring 2.4s ease-out infinite;
+}
+
+.mk-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: mk-marquee 28s linear infinite;
+}
+
+.mk-marquee:hover .mk-marquee-track {
+  animation-play-state: paused;
+}
+
+/* Scroll reveal tanpa JS; browser lama tetap menampilkan konten. */
+.mk-reveal {
+  animation: mk-rise linear both;
+  animation-timeline: view();
+  animation-range: entry 8% cover 26%;
+}
+
+@supports not (animation-timeline: view()) {
+  .mk-reveal {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-enter,
+  .mk-fade,
+  .mk-float,
+  .mk-pulse,
+  .mk-marquee-track,
+  .mk-reveal {
+    animation: none !important;
+  }
+}
+
+/* Bar progres kesiapan data, dipakai di landing dan /fitur. */
+.mk-meter {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--mk-ink) 10%, transparent);
+  overflow: hidden;
+}
+
+.mk-meter > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mk-brand), var(--mk-brand-deep));
+}
