@@ -58,7 +58,7 @@ export default function OverviewPage() {
   }, [load]);
 
   return (
-    <div className="grid gap-4 p-4">
+    <div className="grid gap-4 p-4 dash-stagger">
       <div className="flex flex-wrap items-end gap-2">
         {[7, 30, 90].map((days) => (
           <Button

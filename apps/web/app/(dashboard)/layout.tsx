@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { apiFetch, getTenantId, setTenantId } from "@/lib/api";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
+import { PreferencesProvider } from "@/components/preferences-provider";
+import "./dashboard.css";
 
 type MeResponse = { user: { id: string; name: string }; tenants: { id: string; name: string }[] };
 
@@ -42,12 +44,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const storeName = me.tenants.find((t) => t.id === activeTenantId)?.name ?? me.tenants[0]?.name ?? "Toko";
 
   return (
-    <div className="flex min-h-svh">
-      <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Header storeName={storeName} userName={me.user.name} />
-        <main className="min-h-0 flex-1">{children}</main>
+    <PreferencesProvider>
+      <div className="flex min-h-svh">
+        <Sidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Header storeName={storeName} userName={me.user.name} />
+          <main className="min-h-0 flex-1 dash-enter">{children}</main>
+        </div>
       </div>
-    </div>
+    </PreferencesProvider>
   );
 }

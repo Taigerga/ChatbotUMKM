@@ -97,7 +97,7 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="grid gap-4 p-4">
+    <div className="grid gap-4 p-4 dash-stagger">
       <Card>
         <CardHeader><CardTitle>Produk ({total})</CardTitle></CardHeader>
         <CardContent className="grid gap-3">

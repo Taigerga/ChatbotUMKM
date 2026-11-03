@@ -9,5 +9,5 @@ export const NAV = [
   { href: "/customers", label: "Pelanggan", icon: Users, ready: true },
   { href: "/imports", label: "Impor Data", icon: FileUp, ready: true },
   { href: "/machine-learning", label: "Machine Learning", icon: BarChart3, ready: true },
-  { href: "/settings", label: "Pengaturan", icon: Settings, ready: false },
+  { href: "/settings", label: "Pengaturan", icon: Settings, ready: true },
 ];

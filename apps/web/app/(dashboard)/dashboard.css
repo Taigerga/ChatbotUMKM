@@ -1,0 +1,172 @@
+/* Tema & animasi khusus dashboard. Marketing tetap pakai palet sendiri. */
+
+@theme inline {
+  --color-d-bg: var(--d-bg);
+  --color-d-surface: var(--d-surface);
+  --color-d-ink: var(--d-ink);
+  --color-d-muted: var(--d-muted);
+  --color-d-brand: var(--d-brand);
+  --color-d-brand-deep: var(--d-brand-deep);
+  --color-d-accent: var(--d-accent);
+  --color-d-line: var(--d-line);
+  --font-display: var(--font-display);
+}
+
+.dash {
+  --d-bg: oklch(0.985 0.012 250);
+  --d-surface: oklch(1 0 0);
+  --d-ink: oklch(0.18 0.03 250);
+  --d-muted: oklch(0.45 0.03 250);
+  --d-brand: oklch(0.62 0.16 65);
+  --d-brand-deep: oklch(0.5 0.17 55);
+  --d-accent: oklch(0.55 0.13 165);
+  --d-line: oklch(0.18 0.03 250 / 0.1);
+
+  /* Override token shadcn di dalam dashboard saja. */
+  --background: var(--d-bg);
+  --foreground: var(--d-ink);
+  --card: var(--d-surface);
+  --card-foreground: var(--d-ink);
+  --popover: var(--d-surface);
+  --popover-foreground: var(--d-ink);
+  --primary: var(--d-brand);
+  --primary-foreground: oklch(0.985 0.01 65);
+  --secondary: oklch(0.94 0.02 250);
+  --secondary-foreground: var(--d-ink);
+  --muted: oklch(0.95 0.015 250);
+  --muted-foreground: var(--d-muted);
+  --accent: oklch(0.92 0.04 165);
+  --accent-foreground: oklch(0.22 0.06 165);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: var(--d-line);
+  --input: var(--d-line);
+  --ring: var(--d-brand);
+  --sidebar: oklch(0.97 0.015 250);
+  --sidebar-foreground: var(--d-ink);
+  --sidebar-primary: var(--d-brand);
+  --sidebar-primary-foreground: oklch(0.985 0.01 65);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--d-line);
+  --sidebar-ring: var(--d-brand);
+  --chart-1: var(--d-brand);
+  --chart-2: var(--d-accent);
+  --chart-3: oklch(0.6 0.14 220);
+  --chart-4: oklch(0.65 0.12 300);
+  --chart-5: oklch(0.7 0.1 40);
+
+  background:
+    radial-gradient(120% 80% at 100% 0%, color-mix(in oklch, var(--d-brand) 10%, transparent), transparent 60%),
+    radial-gradient(90% 70% at 0% 100%, color-mix(in oklch, var(--d-accent) 10%, transparent), transparent 60%),
+    var(--d-bg);
+  color: var(--d-ink);
+  min-height: 100svh;
+}
+
+.dark .dash {
+  --d-bg: oklch(0.16 0.025 250);
+  --d-surface: oklch(0.21 0.03 250);
+  --d-ink: oklch(0.96 0.01 250);
+  --d-muted: oklch(0.7 0.02 250);
+  --d-brand: oklch(0.74 0.16 65);
+  --d-brand-deep: oklch(0.62 0.17 55);
+  --d-accent: oklch(0.7 0.13 165);
+  --d-line: oklch(1 0 0 / 10%);
+
+  --background: var(--d-bg);
+  --foreground: var(--d-ink);
+  --card: var(--d-surface);
+  --card-foreground: var(--d-ink);
+  --popover: var(--d-surface);
+  --popover-foreground: var(--d-ink);
+  --primary: var(--d-brand);
+  --primary-foreground: oklch(0.18 0.03 65);
+  --secondary: oklch(0.26 0.03 250);
+  --secondary-foreground: var(--d-ink);
+  --muted: oklch(0.26 0.03 250);
+  --muted-foreground: var(--d-muted);
+  --accent: oklch(0.3 0.06 165);
+  --accent-foreground: oklch(0.9 0.08 165);
+  --border: var(--d-line);
+  --input: var(--d-line);
+  --ring: var(--d-brand);
+  --sidebar: oklch(0.19 0.03 250);
+  --sidebar-foreground: var(--d-ink);
+  --sidebar-primary: var(--d-brand);
+  --sidebar-primary-foreground: oklch(0.18 0.03 65);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--d-line);
+  --sidebar-ring: var(--d-brand);
+
+  background:
+    radial-gradient(120% 80% at 100% 0%, color-mix(in oklch, var(--d-brand) 14%, transparent), transparent 60%),
+    radial-gradient(90% 70% at 0% 100%, color-mix(in oklch, var(--d-accent) 12%, transparent), transparent 60%),
+    var(--d-bg);
+}
+
+@keyframes dash-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes dash-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dash-enter { animation: dash-rise 520ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.dash-fade { animation: dash-fade 600ms ease both; }
+
+.dash-stagger > * { animation: dash-rise 520ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.dash-stagger > *:nth-child(1) { animation-delay: 40ms; }
+.dash-stagger > *:nth-child(2) { animation-delay: 90ms; }
+.dash-stagger > *:nth-child(3) { animation-delay: 140ms; }
+.dash-stagger > *:nth-child(4) { animation-delay: 190ms; }
+.dash-stagger > *:nth-child(5) { animation-delay: 240ms; }
+.dash-stagger > *:nth-child(6) { animation-delay: 290ms; }
+
+/* Kartu dashboard: sedikit angkat saat hover. */
+.dash [data-slot="card"] {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  border-radius: 1rem;
+}
+
+.dash [data-slot="card"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px -28px color-mix(in oklch, var(--d-brand) 35%, transparent);
+}
+
+/* Tabel: header sticky feel + row hover. */
+.dash table thead th {
+  background: color-mix(in oklch, var(--d-brand) 8%, transparent);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dash table tbody tr {
+  transition: background 120ms ease;
+}
+
+.dash table tbody tr:hover {
+  background: color-mix(in oklch, var(--d-brand) 6%, transparent);
+}
+
+/* Scrollbar tipis. */
+.dash ::-webkit-scrollbar { width: 8px; height: 8px; }
+.dash ::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--d-ink) 18%, transparent);
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-enter, .dash-fade, .dash-stagger > * { animation: none !important; }
+  .dash [data-slot="card"]:hover { transform: none; }
+}
+
+/* Kepadatan & ukuran teks dikontrol via kelas pada root. */
+.dash.text-sm-root { font-size: 0.875rem; }
+.dash.text-lg-root { font-size: 1.125rem; }
+.dash.density-compact [data-slot="card"] { padding: 0.75rem; }
+.dash.density-compact .gap-4 { gap: 0.75rem; }

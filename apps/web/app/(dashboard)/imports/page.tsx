@@ -103,7 +103,7 @@ export default function ImportsPage() {
   }
 
   return (
-    <div className="grid gap-4 p-4">
+    <div className="grid gap-4 p-4 dash-stagger">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle>Impor Data</CardTitle>
