@@ -10,10 +10,11 @@ export class SaveAiConfigDto {
   @MaxLength(120)
   model!: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(8)
   @MaxLength(4096)
-  apiKey!: string;
+  apiKey?: string;
 
   @IsOptional()
   @IsString()

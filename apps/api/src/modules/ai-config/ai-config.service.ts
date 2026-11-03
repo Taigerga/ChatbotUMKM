@@ -6,7 +6,7 @@ import { GeminiProvider } from "../ai-provider/gemini.provider.js";
 import { OpenAiCompatibleProvider } from "../ai-provider/openai-compatible.provider.js";
 import { ProviderError, type AiProvider, type CompletionRequest } from "../ai-provider/provider.interface.js";
 
-type ConfigInput = { provider: "gemini" | "openai-compatible"; model: string; apiKey: string; baseUrl?: string };
+type ConfigInput = { provider: "gemini" | "openai-compatible"; model: string; apiKey?: string; baseUrl?: string };
 
 @Injectable()
 export class AiConfigService {
@@ -39,7 +39,8 @@ export class AiConfigService {
 
   async save(userId: string, input: ConfigInput) {
     this.validate(input);
-    const encrypted = encryptSecret(input.apiKey, this.passphrase);
+    const apiKey = await this.resolveApiKey(userId, input.apiKey);
+    const encrypted = encryptSecret(apiKey, this.passphrase);
     await this.prisma.userAiConfig.upsert({
       where: { userId },
       create: { userId, provider: input.provider, model: input.model.trim(), baseUrl: input.baseUrl?.trim() || null, apiKeyEncrypted: encrypted },
@@ -48,12 +49,25 @@ export class AiConfigService {
     return this.getMasked(userId);
   }
 
+  private async resolveApiKey(userId: string, apiKey?: string): Promise<string> {
+    const trimmed = apiKey?.trim();
+    if (trimmed) return trimmed;
+    const existing = await this.prisma.userAiConfig.findUnique({ where: { userId } });
+    if (!existing) throw new BadRequestException({ code: "API_KEY_REQUIRED", message: "API Key wajib diisi" });
+    try {
+      return decryptSecret(existing.apiKeyEncrypted, this.passphrase);
+    } catch {
+      throw new BadRequestException({ code: "API_KEY_REQUIRED", message: "API Key wajib diisi" });
+    }
+  }
+
   async remove(userId: string) {
     await this.prisma.userAiConfig.deleteMany({ where: { userId } });
     return { ok: true };
   }
 
   async test(input: ConfigInput) {
+    if (!input.apiKey?.trim()) throw new BadRequestException({ code: "API_KEY_REQUIRED", message: "API Key wajib diisi untuk uji koneksi" });
     this.validate(input);
     const provider = this.buildProvider(input);
     const request: CompletionRequest = {
@@ -97,9 +111,11 @@ export class AiConfigService {
   }
 
   private buildProvider(input: ConfigInput): AiProvider {
+    const apiKey = input.apiKey?.trim();
+    if (!apiKey) throw new BadRequestException({ code: "API_KEY_REQUIRED", message: "API Key wajib diisi" });
     if (input.provider === "gemini") {
-      return new GeminiProvider(input.apiKey, input.model.trim());
+      return new GeminiProvider(apiKey, input.model.trim());
     }
-    return new OpenAiCompatibleProvider(input.baseUrl!.trim(), input.apiKey, input.model.trim(), loadEnv().AI_TIMEOUT_MS);
+    return new OpenAiCompatibleProvider(input.baseUrl!.trim(), apiKey, input.model.trim(), loadEnv().AI_TIMEOUT_MS);
   }
 }

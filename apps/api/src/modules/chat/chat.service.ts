@@ -50,7 +50,9 @@ export class ChatService {
     const turns = await this.loadTurns(conversation.id);
 
     for (let loop = 0; loop < 5; loop++) {
-      const completion = await this.completeWithFriendlyError(completer, { system: SYSTEM_PROMPT, messages: turns, tools: TOOL_SPECS });
+      const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
+    const system = `${SYSTEM_PROMPT}\\nTanggal hari ini (WIB): ${today}.`;
+    const completion = await this.completeWithFriendlyError(completer, { system, messages: turns, tools: TOOL_SPECS });
       const write = completion.toolCalls.find((call) => WRITE_TOOLS.has(call.name));
       if (write) return this.propose(tenantId, conversation.id, write.name, write.arguments, completion.text);
 
