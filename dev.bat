@@ -27,10 +27,10 @@ echo [2/3] Starting Frontend (port 3000)...
 start "Chatbot UMKM - Web" cmd /k "cd /d ""%~dp0apps\web"" && npm run dev"
 
 if "%ML_SKIP%"=="0" (
-    echo [3/3] Starting ML Service (port 8001)...
+    echo [3/3] Starting ML Service...
     start "Chatbot UMKM - ML" cmd /k "cd /d ""%~dp0ml"" && .venv\Scripts\activate.bat && python -m uvicorn src.service:app --host 127.0.0.1 --port 8001 --reload"
 ) else (
-    echo [3/3] ML Service skipped (ml\.venv not found)
+    echo [3/3] ML Service skipped - venv not found
 )
 
 echo.
