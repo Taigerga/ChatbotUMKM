@@ -1,63 +1,43 @@
 @echo off
 REM Chatbot UMKM Development Environment Launcher
-REM Runs: Database, Backend API, ML Service, Frontend (all parallel)
-
-setlocal enabledelayedexpansion
+REM Starts: Backend API (3001), Frontend (3000), ML Service (8001)
+setlocal
 
 echo.
-echo ╔════════════════════════════════════════════════════════╗
-echo ║  Chatbot UMKM - Development Environment               ║
-echo ║  Backend(3001) | Frontend(3000) | ML(8001)            ║
-echo ╚════════════════════════════════════════════════════════╝
+echo ==================================================
+echo   Chatbot UMKM - Development Environment
+echo   Backend(3001) ^| Frontend(3000) ^| ML(8001)
+echo ==================================================
 echo.
+cd /d "%~dp0"
 
-REM Check if node_modules exists
 if not exist "node_modules" (
-    echo [ERROR] node_modules not found. Run setup first:
-    echo   dev-setup.bat
+    echo [ERROR] node_modules not found. Run dev-setup.bat first.
+    pause
     exit /b 1
 )
 
-REM Check if ml venv exists
-if not exist "ml\.venv" (
-    echo [WARNING] ML venv not found. Skipping ML service.
-    echo   To enable ML: cd ml ^&^& python -m venv .venv ^&^& .venv\Scripts\activate ^&^& pip install -r requirements.txt
-    set ML_SKIP=1
+set ML_SKIP=1
+if exist "ml\.venv" set ML_SKIP=0
+
+echo [1/3] Starting Backend API (port 3001)...
+start "Chatbot UMKM - API" cmd /k "cd /d ""%~dp0apps\api"" && npm run start:dev"
+
+echo [2/3] Starting Frontend (port 3000)...
+start "Chatbot UMKM - Web" cmd /k "cd /d ""%~dp0apps\web"" && npm run dev"
+
+if "%ML_SKIP%"=="0" (
+    echo [3/3] Starting ML Service (port 8001)...
+    start "Chatbot UMKM - ML" cmd /k "cd /d ""%~dp0ml"" && .venv\Scripts\activate.bat && python -m uvicorn src.service:app --host 127.0.0.1 --port 8001 --reload"
 ) else (
-    set ML_SKIP=0
-)
-
-echo [1/4] Starting Backend API (port 3001)...
-cd apps\api
-start "Chatbot UMKM - API" /d "%cd%" cmd /k "npm run start:dev"
-cd ..\..
-
-timeout /t 2 /nobreak
-
-echo [2/4] Starting Frontend Dev Server (port 3000)...
-cd apps\web
-start "Chatbot UMKM - Web" /d "%cd%" cmd /k "npm run dev"
-cd ..\..
-
-timeout /t 2 /nobreak
-
-if %ML_SKIP% == 0 (
-    echo [3/4] Starting ML Service (port 8001)...
-    cd ml
-    start "Chatbot UMKM - ML" /d "%cd%" cmd /k ".venv\Scripts\activate && python -m uvicorn src.service:app --host 127.0.0.1 --port 8001 --reload"
-    cd ..
-    echo [4/4] All services starting. Open browser: http://localhost:3000
-) else (
-    echo [3/4] ML Service skipped (not configured)
-    echo All services starting. Open browser: http://localhost:3000
+    echo [3/3] ML Service skipped (ml\.venv not found)
 )
 
 echo.
-echo Services running:
-echo   Web:     http://localhost:3000
-echo   API:     http://localhost:3001/api/v1
-echo   ML:      http://127.0.0.1:8001/docs (if enabled)
+echo Services starting in separate windows:
+echo   Web: http://localhost:3000
+echo   API: http://localhost:3001/api/v1
+echo   ML:  http://127.0.0.1:8001/docs (if enabled)
 echo.
-echo Press Ctrl+C in each window to stop.
-echo.
-pause
+echo Close this window or press any key to exit.
+pause >nul
