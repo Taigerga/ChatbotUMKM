@@ -48,6 +48,14 @@ export class MlService {
     return this.request("/predict/anomaly", { method: "POST", body: JSON.stringify({ series }) });
   }
 
+  async trainTenant(payload: unknown) {
+    return this.request("/tenant/train", { method: "POST", body: JSON.stringify(payload) });
+  }
+
+  async tenantResults(tenantId: string) {
+    return this.request(`/tenant/results?tenant_id=${encodeURIComponent(tenantId)}`);
+  }
+
   async dataReadiness(tenantId: string) {
     const [sales, customers, products] = await Promise.all([
       this.prisma.sale.findMany({ where: { tenantId, status: "posted" }, select: { occurredAt: true, customerId: true, items: { select: { qty: true } } } }),

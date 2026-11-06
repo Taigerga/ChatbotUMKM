@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from src.metadata import MODELS, describe
 from src.models import anomaly, churn, forecasting, mba, rfm
+from src import tenant
 
 TOKEN = os.getenv("ML_INTERNAL_TOKEN", "")
 JOBS: dict[str, dict] = {}
@@ -142,3 +143,27 @@ def predict_churn(req: ChurnRequest, x_ml_token: str | None = Header(default=Non
 def predict_anomaly(req: AnomalyRequest, x_ml_token: str | None = Header(default=None)):
     _auth(x_ml_token)
     return {"anomalies": anomaly.predict(req.series)}
+
+
+class TenantTrainRequest(BaseModel):
+    tenant_id: str
+    daily: list[dict] = []
+    customers: list[dict] = []
+    transactions: list[list[str]] = []
+    horizon: int = 7
+
+
+@app.post("/tenant/train")
+def tenant_train(req: TenantTrainRequest, background_tasks: BackgroundTasks, x_ml_token: str | None = Header(default=None)):
+    _auth(x_ml_token)
+    job_id = str(uuid.uuid4())
+    with LOCK:
+        JOBS[job_id] = {"id": job_id, "status": "running", "result": None, "error": None}
+    background_tasks.add_task(_run_job, job_id, lambda: tenant.train_all(req.model_dump()))
+    return {"job_id": job_id, "status": "running"}
+
+
+@app.get("/tenant/results")
+def tenant_results(tenant_id: str, x_ml_token: str | None = Header(default=None)):
+    _auth(x_ml_token)
+    return tenant.results(tenant_id)

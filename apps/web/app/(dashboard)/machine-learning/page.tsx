@@ -1,187 +1,46 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api";
-import { Badge } from "@workspace/ui/components/badge";
-import { Button } from "@workspace/ui/components/button";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import StatusSection from "./status-section";
+import InsightsSection from "./insights-section";
+import TokoSection from "./toko-section";
 
-type MlModel = {
-  model: string;
-  status: "ready" | "limited" | "not_ready";
-  scope: string;
-  available: boolean;
-  samples: number;
-  metrics: Record<string, unknown>;
-  data_range: string[];
-  limitations: string[];
-  trained_at?: string;
-  reason: string;
-};
+const TABS = [
+  { id: "status", label: "Status Data" },
+  { id: "cerdas", label: "Analisis Cerdas" },
+  { id: "toko", label: "Model Toko" },
+] as const;
 
-type ReadinessModel = {
-  status: "ready" | "limited" | "not_ready";
-  reason: string;
-  steps: string[];
-};
-
-type Readiness = {
-  counts: {
-    sales: number;
-    distinctDays: number;
-    customers: number;
-    products: number;
-    multiItemSales: number;
-    distinctCustomers: number;
-    spanDays: number;
-  };
-  models: Record<string, ReadinessModel>;
-};
-
-type Job = { id: string; status: string; result?: unknown; error?: string | null };
-
-const LABELS: Record<string, string> = {
-  forecasting: "Ramalan Penjualan",
-  rfm: "Segmentasi RFM + K-Means",
-  mba: "Market Basket",
-  churn: "Risiko Churn",
-  anomaly: "Deteksi Anomali",
-};
-
-function statusBadge(status: MlModel["status"]) {
-  if (status === "ready") return <Badge className="bg-emerald-600 text-white">siap</Badge>;
-  if (status === "limited") return <Badge className="bg-amber-500 text-white">siap dengan keterbatasan</Badge>;
-  return <Badge variant="secondary">belum siap</Badge>;
-}
-
-function flatten(value: unknown, prefix = ""): [string, string][] {
-  if (value === null || value === undefined) return [];
-  if (typeof value !== "object") return [[prefix, String(value)]];
-  return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) =>
-    flatten(item, prefix ? `${prefix}.${key}` : key),
-  );
-}
+type Tab = (typeof TABS)[number]["id"];
 
 export default function MachineLearningPage() {
-  const [models, setModels] = useState<Record<string, MlModel> | null>(null);
-  const [readiness, setReadiness] = useState<Readiness | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [modelRes, readinessRes] = await Promise.all([
-        apiFetch<{ scope: string; models: Record<string, MlModel> }>("/ml/models"),
-        apiFetch<Readiness>("/ml/data-readiness"),
-      ]);
-      setModels(modelRes.models);
-      setReadiness(readinessRes);
-      setError(null);
-    } catch (err) {
-      setModels(null);
-      setReadiness(null);
-      setError(err instanceof Error ? err.message : "Layanan ML tidak tersedia.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const [tab, setTab] = useState<Tab>("status");
 
   return (
     <div className="grid gap-4 p-4 dash-stagger">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
-          <div>
-            <CardTitle>Machine Learning</CardTitle>
-            <p className="text-muted-foreground mt-1 text-xs">
-              Semua model dilatih dari dataset publik 150k (global), bukan data toko Anda. Model global tidak dilatih
-              ulang per toko. Hasil adalah referensi, bukan jaminan.
-            </p>
-          </div>
-          <Button size="sm" variant="outline" onClick={load} disabled={loading}>
-            {loading ? "Memuat..." : "Muat ulang"}
-          </Button>
-        </CardHeader>
-        <CardContent className="grid gap-3">
-          {error && (
-            <p className="text-destructive text-sm">
-              {error} — pastikan layanan ML (port 8001) berjalan, lalu muat ulang.
-            </p>
-          )}
-          {message && <p className="text-sm">{message}</p>}
-
-          {readiness && (
-            <div className="grid gap-3 rounded-md border p-3">
-              <div>
-                <p className="font-medium text-sm">Kesiapan data toko</p>
-                <p className="text-muted-foreground text-xs">
-                  {readiness.counts.sales} penjualan, {readiness.counts.distinctDays} hari transaksi,{" "}
-                  {readiness.counts.distinctCustomers} pelanggan bertransaksi, {readiness.counts.multiItemSales} transaksi
-                  multi-item.
-                </p>
-              </div>
-              <div className="grid gap-2 md:grid-cols-2">
-                {Object.entries(readiness.models).map(([name, model]) => (
-                  <div key={name} className="rounded border p-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{LABELS[name] ?? name}</span>
-                      {statusBadge(model.status)}
-                    </div>
-                    <p className="text-muted-foreground text-xs">{model.reason}</p>
-                    {model.steps.length > 0 && (
-                      <ul className="text-muted-foreground mt-1 list-disc pl-4 text-xs">
-                        {model.steps.map((step) => (
-                          <li key={step}>{step}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {!models && !error && <p className="text-muted-foreground text-sm">Memuat status model...</p>}
-          {models &&
-            Object.entries(models).map(([name, model]) => (
-              <div key={name} className="grid gap-2 rounded-md border p-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">{LABELS[name] ?? name}</span>
-                  {statusBadge(model.status)}
-                  <span className="text-muted-foreground text-xs">{model.reason}</span>
-                </div>
-                <div className="text-muted-foreground grid gap-1 text-xs md:grid-cols-2">
-                  <span>Sampel: {model.samples.toLocaleString("id-ID")}</span>
-                  <span>
-                    Rentang data: {model.data_range.length === 2 ? `${model.data_range[0]} — ${model.data_range[1]}` : "-"}
-                  </span>
-                  <span>
-                    Dilatih: {model.trained_at ? new Date(model.trained_at).toLocaleString("id-ID") : "-"}
-                  </span>
-                  <span>Scope: {model.scope === "global" ? "global (dataset publik)" : model.scope}</span>
-                </div>
-                {Object.keys(model.metrics).length > 0 && (
-                  <div className="grid gap-1 text-xs md:grid-cols-2">
-                    {flatten(model.metrics).map(([key, value]) => (
-                      <div key={key} className="flex justify-between gap-2 border-b py-0.5">
-                        <span className="text-muted-foreground">{key}</span>
-                        <span className="font-mono">{value}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <ul className="text-muted-foreground list-disc pl-4 text-xs">
-                  {model.limitations.map((limitation) => (
-                    <li key={limitation}>{limitation}</li>
-                  ))}
-                </ul>
-              </div>
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+          <CardTitle>Machine Learning</CardTitle>
+          <div className="bg-muted flex gap-1 rounded-md p-1">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                className={`rounded px-3 py-1 text-sm ${
+                  tab === t.id ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t.label}
+              </button>
             ))}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {tab === "status" && <StatusSection />}
+          {tab === "cerdas" && <InsightsSection />}
+          {tab === "toko" && <TokoSection />}
         </CardContent>
       </Card>
     </div>

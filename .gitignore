@@ -54,6 +54,7 @@ data/processed/
 
 # artefak model & venv python
 ml/artifacts/
+ml/artifacts-test/
 ml/.venv/
 __pycache__/
 .pytest_cache/
