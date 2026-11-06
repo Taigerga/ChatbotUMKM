@@ -6,6 +6,7 @@ import { apiFetch } from "@/lib/api";
 import { ChatEmptyState } from "@/components/chat/empty-state";
 import { ChatComposer } from "@/components/chat/composer";
 import { MessageList, type ChatMessage } from "@/components/chat/message-list";
+import type { ActionResult, ActionPreview } from "@/components/chat/action-card";
 import { HistoryPanel, type ConversationSummary } from "@/components/chat/history-panel";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 
@@ -15,7 +16,7 @@ type SendMessageResponse = {
   action?: {
     id: string;
     tool: string;
-    preview: ChatMessage["action"] extends infer T ? (T extends { preview: infer P } ? P : never) : never;
+    preview: ActionPreview;
     expiresAt: string;
   };
 };
@@ -194,7 +195,7 @@ export default function ChatPage() {
     }
   }
 
-  function resolveAction(actionId: string, status: "executed" | "cancelled", result?: { saleId: string; total: string }) {
+  function resolveAction(actionId: string, status: "executed" | "cancelled", result?: ActionResult) {
     setMessages((prev) =>
       prev.map((message) =>
         message.action?.id === actionId

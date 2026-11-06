@@ -6,39 +6,69 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { apiFetch } from "@/lib/api";
+import { formatDateTime, formatRupiah } from "@/lib/format";
 
-type PreviewItem = {
-  description: string;
-  qty: number;
-  unitPrice: string;
-  lineTotal: string;
-};
-
-type Preview = {
-  occurredAt: string;
-  items: PreviewItem[];
-  subtotal: string;
-  discount: string;
-  tax: string;
-  total: string;
+export type ActionPreview = {
+  occurredAt?: string;
+  customerName?: string | null;
+  items?: { productName?: string | null; description: string; qty: number; unitPrice: string; lineTotal: string }[];
+  subtotal?: string;
+  discount?: string;
+  tax?: string;
+  total?: string;
   warnings?: string[];
+  warning?: string;
+  sku?: string | null;
+  name?: string;
+  category?: string | null;
+  price?: string;
+  cost?: string | null;
+  externalRef?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  before?: { sku?: string | null; name?: string; price?: string; externalRef?: string | null };
+  after?: { sku?: string | null; name?: string; price?: string; externalRef?: string | null };
+  beforeTotal?: string;
+  saleId?: string;
+  productId?: string;
+  customerId?: string;
 };
 
-type Action = {
+export type ActionResult = {
+  saleId?: string;
+  saleCode?: string;
+  productId?: string;
+  customerId?: string;
+  total?: string;
+};
+
+export type PendingAction = {
   id: string;
   tool: string;
-  preview: Preview;
+  preview: ActionPreview;
   expiresAt: string;
   status?: "proposed" | "executed" | "cancelled";
-  result?: { saleId: string; total: string };
+  result?: ActionResult;
+};
+
+const TITLES: Record<string, string> = {
+  createSale: "Usulan penjualan",
+  updateSale: "Usulan perubahan penjualan",
+  deleteSale: "Usulan pembatalan penjualan",
+  createProduct: "Usulan produk baru",
+  updateProduct: "Usulan perubahan produk",
+  deleteProduct: "Usulan hapus produk",
+  createCustomer: "Usulan pelanggan baru",
+  updateCustomer: "Usulan perubahan pelanggan",
+  deleteCustomer: "Usulan hapus pelanggan",
 };
 
 export function ActionCard({
   action,
   onResolved,
 }: {
-  action: Action;
-  onResolved: (actionId: string, status: "executed" | "cancelled", result?: { saleId: string; total: string }) => void;
+  action: PendingAction;
+  onResolved: (actionId: string, status: "executed" | "cancelled", result?: ActionResult) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,10 +77,7 @@ export function ActionCard({
     setBusy(true);
     setError(null);
     try {
-      const result = await apiFetch<{ status: string; result: { saleId: string; total: string } }>(
-        `/chat/actions/${action.id}/confirm`,
-        { method: "POST" },
-      );
+      const result = await apiFetch<{ status: string; result: ActionResult }>(`/chat/actions/${action.id}/confirm`, { method: "POST" });
       onResolved(action.id, "executed", result.result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal menyimpan");
@@ -73,12 +100,16 @@ export function ActionCard({
   }
 
   const resolved = action.status && action.status !== "proposed";
+  const preview = action.preview;
+  const isSale = action.tool === "createSale" || action.tool === "updateSale" || action.tool === "deleteSale";
+  const isProduct = action.tool.includes("Product");
+  const isCustomer = action.tool.includes("Customer");
 
   return (
     <Card className="border-primary/30">
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
-          <CardTitle className="text-sm">Usulan penjualan</CardTitle>
+          <CardTitle className="text-sm">{TITLES[action.tool] ?? "Usulan aksi"}</CardTitle>
           {resolved && (
             <Badge variant={action.status === "executed" ? "default" : "secondary"}>
               {action.status === "executed" ? "Disimpan" : "Dibatalkan"}
@@ -87,39 +118,117 @@ export function ActionCard({
         </div>
       </CardHeader>
       <CardContent className="grid gap-3 text-sm">
-        <div className="text-muted-foreground">
-          Tanggal: <span className="text-foreground">{new Date(action.preview.occurredAt).toLocaleString("id-ID")}</span>
-        </div>
-        <ul className="grid gap-1">
-          {action.preview.items.map((item, index) => (
-            <li key={index} className="flex justify-between gap-2">
-              <span>
-                {item.description} × {item.qty}
-              </span>
-              <span className="tabular-nums">Rp{Number(item.lineTotal).toLocaleString("id-ID")}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="grid gap-1 border-t pt-2">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Subtotal</span>
-            <span className="tabular-nums">Rp{Number(action.preview.subtotal).toLocaleString("id-ID")}</span>
+        {isSale && (
+          <>
+            {preview.occurredAt && (
+              <div className="text-muted-foreground">
+                Tanggal: <span className="text-foreground">{formatDateTime(preview.occurredAt)}</span>
+              </div>
+            )}
+            {preview.customerName && (
+              <div className="text-muted-foreground">
+                Pelanggan: <span className="text-foreground">{preview.customerName}</span>
+              </div>
+            )}
+            {preview.items && preview.items.length > 0 && (
+              <ul className="grid gap-1">
+                {preview.items.map((item, index) => (
+                  <li key={index} className="flex justify-between gap-2">
+                    <span>
+                      {item.productName ?? item.description} × {item.qty}
+                    </span>
+                    <span className="tabular-nums">{formatRupiah(item.lineTotal)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {(preview.subtotal || preview.total) && (
+              <div className="grid gap-1 border-t pt-2">
+                {preview.beforeTotal && (
+                  <div className="text-muted-foreground flex justify-between">
+                    <span>Total sebelumnya</span>
+                    <span className="tabular-nums">{formatRupiah(preview.beforeTotal)}</span>
+                  </div>
+                )}
+                {preview.subtotal && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="tabular-nums">{formatRupiah(preview.subtotal)}</span>
+                  </div>
+                )}
+                {preview.total && (
+                  <div className="flex justify-between font-semibold">
+                    <span>Total</span>
+                    <span className="tabular-nums">{formatRupiah(preview.total)}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {isProduct && (
+          <div className="grid gap-1">
+            {preview.after ? (
+              <>
+                <div className="text-muted-foreground">
+                  Sebelum: <span className="text-foreground">{preview.before?.name ?? "-"}</span>
+                </div>
+                <div className="text-muted-foreground">
+                  Sesudah: <span className="text-foreground">{preview.after.name ?? "-"}</span>
+                  {preview.after.price ? ` · ${formatRupiah(preview.after.price)}` : ""}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="font-medium">{preview.name}</div>
+                <div className="text-muted-foreground">
+                  SKU {preview.sku ?? "otomatis"} · Kategori {preview.category ?? "-"} · {formatRupiah(preview.price ?? 0)}
+                </div>
+              </>
+            )}
           </div>
-          <div className="flex justify-between font-semibold">
-            <span>Total</span>
-            <span className="tabular-nums">Rp{Number(action.preview.total).toLocaleString("id-ID")}</span>
+        )}
+
+        {isCustomer && (
+          <div className="grid gap-1">
+            {preview.after ? (
+              <>
+                <div className="text-muted-foreground">
+                  Sebelum: <span className="text-foreground">{preview.before?.name ?? "-"}</span>
+                </div>
+                <div className="text-muted-foreground">
+                  Sesudah: <span className="text-foreground">{preview.after.name ?? "-"}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="font-medium">{preview.name}</div>
+                <div className="text-muted-foreground">
+                  Referensi {preview.externalRef ?? "otomatis"} · Telepon {preview.phone ?? "-"} · Email {preview.email ?? "-"}
+                </div>
+              </>
+            )}
           </div>
-        </div>
-        {action.preview.warnings && action.preview.warnings.length > 0 && (
+        )}
+
+        {preview.warnings && preview.warnings.length > 0 && (
           <ul className="text-amber-600 list-disc pl-4 text-xs">
-            {action.preview.warnings.map((warning) => (
+            {preview.warnings.map((warning) => (
               <li key={warning}>{warning}</li>
             ))}
           </ul>
         )}
-        {action.result && (
-          <p className="text-muted-foreground text-xs">ID transaksi: {action.result.saleId}</p>
+        {preview.warning && <p className="text-amber-600 text-xs">{preview.warning}</p>}
+
+        {action.result && (action.result.saleId || action.result.productId || action.result.customerId) && (
+          <p className="text-muted-foreground text-xs">
+            {action.result.saleId && <>Transaksi {action.result.saleCode ?? action.result.saleId}</>}
+            {action.result.productId && <>Produk {action.result.productId}</>}
+            {action.result.customerId && <>Pelanggan {action.result.customerId}</>}
+          </p>
         )}
+
         {error && <p className="text-destructive text-xs">{error}</p>}
         {!resolved && (
           <div className="flex gap-2">

@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/componen
 import { Input } from "@workspace/ui/components/input";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 
-type Product = { id: string; sku: string; name: string; category: string | null; price: string; cost: string | null };
+type Product = { id: string; sku: string | null; name: string; category: string | null; price: string; cost: string | null };
 type FormState = { sku: string; name: string; category: string; price: string; cost: string };
 
 const PAGE_SIZE = 20;
@@ -27,6 +27,16 @@ export default function ProductsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+
+  const loadCategories = useCallback(async () => {
+    try {
+      const res = await apiFetch<{ items: string[] }>("/products/categories");
+      setCategories(res.items);
+    } catch {
+      setCategories([]);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,6 +61,10 @@ export default function ProductsPage() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
   function resetForm() {
     setForm(emptyForm);
     setEditingId(null);
@@ -60,7 +74,7 @@ export default function ProductsPage() {
     event.preventDefault();
     setError(null);
     const body = {
-      sku: form.sku,
+      sku: form.sku || undefined,
       name: form.name,
       category: form.category || undefined,
       price: Number(form.price),
@@ -73,7 +87,7 @@ export default function ProductsPage() {
         await apiFetch("/products", { method: "POST", body: JSON.stringify(body) });
       }
       resetForm();
-      await load();
+      await Promise.all([load(), loadCategories()]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal menyimpan produk.");
     }
@@ -82,7 +96,7 @@ export default function ProductsPage() {
   function startEdit(product: Product) {
     setEditingId(product.id);
     setForm({
-      sku: product.sku,
+      sku: product.sku ?? "",
       name: product.name,
       category: product.category ?? "",
       price: product.price,
@@ -116,7 +130,7 @@ export default function ProductsPage() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         title={`Hapus produk "${deleteTarget?.name}"`}
-        description="Produk ini akan dihapus permanen. Tindakan tidak bisa dibatalkan."
+        description="Produk dihapus dari daftar. Jika sudah dipakai transaksi, produk hanya diarsipkan agar riwayat tetap utuh."
         onConfirm={confirmDelete}
         confirmLabel="Hapus"
         cancelLabel="Batalkan"
@@ -128,9 +142,9 @@ export default function ProductsPage() {
         <CardHeader><CardTitle>Produk ({total})</CardTitle></CardHeader>
         <CardContent className="grid gap-3">
           <form className="grid gap-2 md:grid-cols-6" onSubmit={submit}>
-            <Input placeholder="SKU" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} required />
+            <Input placeholder="SKU (otomatis jika kosong)" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
             <Input placeholder="Nama" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-            <Input placeholder="Kategori" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+            <Input list="product-categories" placeholder="Kategori (bisa ketik baru)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
             <Input placeholder="Harga" type="number" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required />
             <Input placeholder="Biaya" type="number" min="0" value={form.cost} onChange={(e) => setForm({ ...form, cost: e.target.value })} />
             <div className="flex gap-1">
@@ -138,6 +152,11 @@ export default function ProductsPage() {
               {editingId && <Button type="button" variant="outline" onClick={resetForm}>Batal</Button>}
             </div>
           </form>
+          <datalist id="product-categories">
+            {categories.map((category) => (
+              <option key={category} value={category} />
+            ))}
+          </datalist>
 
           <Input
             placeholder="Cari produk (nama/SKU)..."
@@ -165,7 +184,7 @@ export default function ProductsPage() {
                 <tbody>
                   {items.map((product) => (
                     <tr key={product.id} className="border-b">
-                      <td className="py-2">{product.sku}</td>
+                      <td className="py-2">{product.sku ?? "-"}</td>
                       <td>{product.name}</td>
                       <td>{product.category ?? "-"}</td>
                       <td>{formatRupiah(product.price)}</td>

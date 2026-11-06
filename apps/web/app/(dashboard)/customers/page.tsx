@@ -9,8 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/componen
 import { Input } from "@workspace/ui/components/input";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 
-type Customer = { id: string; externalRef: string; name: string; phone: string | null; email: string | null };
-type Sale = { id: string; occurredAt: string; total: string };
+type Customer = { id: string; externalRef: string | null; name: string; phone: string | null; email: string | null; saleCount: number };
+type Sale = { id: string; code: string; occurredAt: string; total: string; status: string };
 type FormState = { externalRef: string; name: string; phone: string; email: string };
 
 const PAGE_SIZE = 20;
@@ -62,7 +62,7 @@ export default function CustomersPage() {
     event.preventDefault();
     setError(null);
     const body = {
-      externalRef: form.externalRef,
+      externalRef: form.externalRef || undefined,
       name: form.name,
       phone: form.phone || undefined,
       email: form.email || undefined,
@@ -83,7 +83,7 @@ export default function CustomersPage() {
   function startEdit(customer: Customer) {
     setEditingId(customer.id);
     setForm({
-      externalRef: customer.externalRef,
+      externalRef: customer.externalRef ?? "",
       name: customer.name,
       phone: customer.phone ?? "",
       email: customer.email ?? "",
@@ -127,7 +127,7 @@ export default function CustomersPage() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         title={`Hapus pelanggan "${deleteTarget?.name}"`}
-        description="Pelanggan ini akan dihapus permanen. Tindakan tidak bisa dibatalkan."
+        description="Pelanggan dihapus dari daftar. Jika sudah punya transaksi, pelanggan hanya diarsipkan agar riwayat tetap utuh."
         onConfirm={confirmDelete}
         confirmLabel="Hapus"
         cancelLabel="Batalkan"
@@ -139,10 +139,10 @@ export default function CustomersPage() {
         <CardHeader><CardTitle>Pelanggan ({total})</CardTitle></CardHeader>
         <CardContent className="grid gap-3">
           <form className="grid gap-2 md:grid-cols-5" onSubmit={submit}>
-            <Input placeholder="Referensi" value={form.externalRef} onChange={(e) => setForm({ ...form, externalRef: e.target.value })} required />
+            <Input placeholder="Referensi (otomatis jika kosong)" value={form.externalRef} onChange={(e) => setForm({ ...form, externalRef: e.target.value })} />
             <Input placeholder="Nama" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-            <Input placeholder="Telepon" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-            <Input placeholder="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <Input placeholder="Telepon (opsional)" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            <Input placeholder="Email (opsional)" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             <div className="flex gap-1">
               <Button type="submit" className="flex-1">{editingId ? "Simpan" : "Tambah"}</Button>
               {editingId && <Button type="button" variant="outline" onClick={resetForm}>Batal</Button>}
@@ -169,16 +169,18 @@ export default function CustomersPage() {
                     <th>Nama</th>
                     <th>Telepon</th>
                     <th>Email</th>
+                    <th>Transaksi</th>
                     <th className="text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((customer) => (
                     <tr key={customer.id} className="border-b">
-                      <td className="py-2">{customer.externalRef}</td>
+                      <td className="py-2">{customer.externalRef ?? "-"}</td>
                       <td>{customer.name}</td>
                       <td>{customer.phone ?? "-"}</td>
                       <td>{customer.email ?? "-"}</td>
+                      <td>{customer.saleCount}</td>
                       <td className="text-right whitespace-nowrap">
                         <Button size="sm" variant="ghost" onClick={() => showDetail(customer)}>Detail</Button>
                         <Button size="sm" variant="ghost" onClick={() => startEdit(customer)}>Edit</Button>
@@ -201,7 +203,7 @@ export default function CustomersPage() {
             <Button size="sm" variant="ghost" onClick={() => setDetail(null)}>Tutup</Button>
           </CardHeader>
           <CardContent className="grid gap-2 text-sm">
-            <p>Referensi {detail.customer.externalRef} · Telepon {detail.customer.phone ?? "-"} · Email {detail.customer.email ?? "-"}</p>
+            <p>Referensi {detail.customer.externalRef ?? "-"} · Telepon {detail.customer.phone ?? "-"} · Email {detail.customer.email ?? "-"}</p>
             <p className="text-muted-foreground text-xs">Riwayat transaksi terakhir:</p>
             {detail.sales.length === 0 ? (
               <p className="text-muted-foreground text-sm">Belum ada transaksi untuk pelanggan ini.</p>
@@ -209,7 +211,7 @@ export default function CustomersPage() {
               <ul className="grid gap-1">
                 {detail.sales.map((sale) => (
                   <li key={sale.id} className="flex justify-between border-b py-1">
-                    <span>{formatDateTime(sale.occurredAt)}</span>
+                    <span>{sale.code} · {formatDateTime(sale.occurredAt)}</span>
                     <span>{formatRupiah(sale.total)}</span>
                   </li>
                 ))}

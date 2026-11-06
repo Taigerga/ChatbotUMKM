@@ -1,27 +1,12 @@
 "use client";
 
-import { ActionCard } from "./action-card";
+import { ActionCard, type ActionResult, type PendingAction } from "./action-card";
 
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
-  action?: {
-    id: string;
-    tool: string;
-    preview: {
-      occurredAt: string;
-      items: { description: string; qty: number; unitPrice: string; lineTotal: string }[];
-      subtotal: string;
-      discount: string;
-      tax: string;
-      total: string;
-      warnings?: string[];
-    };
-    expiresAt: string;
-    status?: "proposed" | "executed" | "cancelled";
-    result?: { saleId: string; total: string };
-  };
+  action?: PendingAction;
 };
 
 export function MessageList({
@@ -29,7 +14,7 @@ export function MessageList({
   onResolved,
 }: {
   messages: ChatMessage[];
-  onResolved: (actionId: string, status: "executed" | "cancelled", result?: { saleId: string; total: string }) => void;
+  onResolved: (actionId: string, status: "executed" | "cancelled", result?: ActionResult) => void;
 }) {
   return (
     <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
