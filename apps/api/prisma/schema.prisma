@@ -41,35 +41,42 @@ model TenantMember {
 }
 
 model Customer {
-  id          String @id @default(cuid())
+  id          String    @id @default(cuid())
   tenantId    String
-  externalRef String
+  externalRef String?
   name        String
   phone       String?
   email       String?
-  createdAt   DateTime @default(now())
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  sales       Sale[]
 
   @@unique([tenantId, externalRef])
   @@index([tenantId])
+  @@index([tenantId, phone])
 }
 
 model Product {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   tenantId  String
-  sku       String
+  sku       String?
   name      String
   category  String?
-  price     Decimal  @db.Decimal(14, 2)
-  cost      Decimal? @db.Decimal(14, 2)
-  createdAt DateTime @default(now())
+  price     Decimal    @db.Decimal(14, 2)
+  cost      Decimal?   @db.Decimal(14, 2)
+  archivedAt DateTime?
+  createdAt DateTime   @default(now())
+  saleItems SaleItem[]
 
   @@unique([tenantId, sku])
   @@index([tenantId])
+  @@index([tenantId, category])
 }
 
 model Sale {
   id             String     @id @default(cuid())
   tenantId       String
+  code           String
   customerId     String?
   occurredAt     DateTime   @db.DateTime(3)
   notes          String?
@@ -78,12 +85,19 @@ model Sale {
   tax            Decimal    @default(0) @db.Decimal(14, 2)
   total          Decimal    @db.Decimal(14, 2)
   source         String     @default("manual")
+  status         String     @default("posted")
+  voidedAt       DateTime?
+  voidReason     String?
   idempotencyKey String?
   createdAt      DateTime   @default(now())
+  customer       Customer?  @relation(fields: [customerId], references: [id], onDelete: Restrict)
   items          SaleItem[]
 
+  @@unique([tenantId, code])
   @@unique([tenantId, idempotencyKey])
   @@index([tenantId, occurredAt])
+  @@index([tenantId, customerId])
+  @@index([tenantId, status])
 }
 
 model SaleItem {
@@ -95,8 +109,10 @@ model SaleItem {
   unitPrice   Decimal @db.Decimal(14, 2)
   lineTotal   Decimal @db.Decimal(14, 2)
   sale        Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: Restrict)
 
   @@index([saleId])
+  @@index([productId])
 }
 
 model ChatConversation {

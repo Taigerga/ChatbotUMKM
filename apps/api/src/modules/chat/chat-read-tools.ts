@@ -16,8 +16,8 @@ export class ChatReadTools {
     const to = this.parseDate(args.to);
     if (!from || !to) return { error: "Tanggal tidak valid, minta pengguna menyebutkan tanggal yang jelas." };
     const [count, aggregate] = await Promise.all([
-      this.prisma.sale.count({ where: { tenantId, occurredAt: { gte: from, lte: to } } }),
-      this.prisma.sale.aggregate({ where: { tenantId, occurredAt: { gte: from, lte: to } }, _sum: { total: true } }),
+      this.prisma.sale.count({ where: { tenantId, status: "posted", occurredAt: { gte: from, lte: to } } }),
+      this.prisma.sale.aggregate({ where: { tenantId, status: "posted", occurredAt: { gte: from, lte: to } }, _sum: { total: true } }),
     ]);
     return { from: args.from, to: args.to, saleCount: count, total: Number(aggregate._sum.total ?? 0).toFixed(2) };
   }
@@ -26,7 +26,7 @@ export class ChatReadTools {
     const query = String(args.query ?? "").trim();
     if (!query) return { error: "Kata kunci produk kosong." };
     const products = await this.prisma.product.findMany({
-      where: { tenantId, OR: [{ name: { contains: query } }, { sku: { contains: query } }] },
+      where: { tenantId, archivedAt: null, OR: [{ name: { contains: query } }, { sku: { contains: query } }] },
       select: { id: true, sku: true, name: true, price: true },
       take: 10,
     });
@@ -37,7 +37,7 @@ export class ChatReadTools {
     const query = String(args.query ?? "").trim();
     if (!query) return { error: "Kata kunci pelanggan kosong." };
     const customers = await this.prisma.customer.findMany({
-      where: { tenantId, OR: [{ name: { contains: query } }, { externalRef: { contains: query } }, { phone: { contains: query } }] },
+      where: { tenantId, archivedAt: null, OR: [{ name: { contains: query } }, { externalRef: { contains: query } }, { phone: { contains: query } }] },
       select: { id: true, externalRef: true, name: true, phone: true, email: true },
       take: 10,
     });
@@ -50,7 +50,7 @@ export class ChatReadTools {
     if (!from || !to) return { error: "Tanggal tidak valid." };
     const limit = Math.min(Math.max(args.limit ?? 5, 1), 20);
     const sales = await this.prisma.sale.findMany({
-      where: { tenantId, occurredAt: { gte: from, lte: to } },
+      where: { tenantId, status: "posted", occurredAt: { gte: from, lte: to } },
       include: { items: true },
     });
     const map = new Map<string, { name: string; qty: number; total: number }>();
@@ -76,7 +76,7 @@ export class ChatReadTools {
     if (!from || !to) return { error: "Tanggal tidak valid." };
     const limit = Math.min(Math.max(args.limit ?? 5, 1), 20);
     const sales = await this.prisma.sale.findMany({
-      where: { tenantId, occurredAt: { gte: from, lte: to } },
+      where: { tenantId, status: "posted", occurredAt: { gte: from, lte: to } },
     });
     const customerIds = Array.from(new Set(sales.map((s) => s.customerId).filter((id): id is string => Boolean(id))));
     const customers = customerIds.length
@@ -116,9 +116,9 @@ export class ChatReadTools {
   async rfmSegments(tenantId: string) {
     try {
       const sales = await this.prisma.sale.findMany({
-        where: { tenantId },
+        where: { tenantId, status: "posted" },
       });
-      const customerRows = await this.prisma.customer.findMany({ where: { tenantId }, select: { id: true, name: true } });
+      const customerRows = await this.prisma.customer.findMany({ where: { tenantId, archivedAt: null }, select: { id: true, name: true } });
       const customerNameMap = new Map(customerRows.map((c) => [c.id, c.name]));
       const ref = sales.reduce((max, sale) => (sale.occurredAt > max ? sale.occurredAt : max), new Date(0));
       const reference = ref.getTime() === 0 ? new Date() : ref;
@@ -160,8 +160,8 @@ export class ChatReadTools {
 
   async churnRisk(tenantId: string) {
     try {
-      const customers = await this.prisma.customer.findMany({ where: { tenantId } });
-      const sales = await this.prisma.sale.findMany({ where: { tenantId } });
+      const customers = await this.prisma.customer.findMany({ where: { tenantId, archivedAt: null } });
+      const sales = await this.prisma.sale.findMany({ where: { tenantId, status: "posted" } });
       const ref = sales.reduce((max, sale) => (sale.occurredAt > max ? sale.occurredAt : max), new Date());
       const reference = ref.getTime() === 0 ? new Date() : ref;
       const aggregates = new Map<string, { count: number; total: number; last: Date }>();
@@ -203,7 +203,7 @@ export class ChatReadTools {
 
   async anomalyDetection(tenantId: string) {
     try {
-      const sales = await this.prisma.sale.findMany({ where: { tenantId } });
+      const sales = await this.prisma.sale.findMany({ where: { tenantId, status: "posted" } });
       const map = new Map<string, number>();
       for (const sale of sales) {
         const key = sale.occurredAt.toISOString().slice(0, 10);

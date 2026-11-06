@@ -58,6 +58,7 @@ export async function seed(prisma: PrismaClient) {
       update: {},
       create: {
         tenantId: DEMO_TENANT_ID,
+        code: `INV-SEED-${i + 1}`,
         occurredAt: new Date(`${day}T04:00:00.000Z`),
         subtotal: "250000.00",
         total: "250000.00",

@@ -15,6 +15,11 @@ export class ProductsController {
     return this.products.list(tenantId, { q, category, limit: limit ? Number(limit) : undefined, offset: offset ? Number(offset) : undefined });
   }
 
+  @Get("categories")
+  categories(@CurrentTenant() tenantId: string) {
+    return this.products.categories(tenantId);
+  }
+
   @Get(":id")
   get(@CurrentTenant() tenantId: string, @Param("id") id: string) {
     return this.products.get(tenantId, id);

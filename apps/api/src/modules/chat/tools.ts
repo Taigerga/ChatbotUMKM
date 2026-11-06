@@ -17,13 +17,13 @@ export type ToolSpec = {
 const saleItemSchema = {
   type: "object",
   properties: {
-    description: { type: "string" },
+    description: { type: "string", description: "Deskripsi item. Opsional jika produk dipilih." },
     product: { type: "string", description: "Nama atau SKU produk (opsional, untuk menghubungkan item ke katalog)" },
     qty: { type: "integer", minimum: 1 },
     unitPrice: { type: "number", minimum: 0 },
     productId: { type: "string" },
   },
-  required: ["description", "qty", "unitPrice"],
+  required: ["qty", "unitPrice"],
 };
 
 export const TOOL_SPECS: ToolSpec[] = [
@@ -100,13 +100,13 @@ export const TOOL_SPECS: ToolSpec[] = [
     parameters: {
       type: "object",
       properties: {
-        sku: { type: "string" },
+        sku: { type: "string", description: "Opsional. Dibuat otomatis jika kosong." },
         name: { type: "string" },
-        category: { type: "string" },
+        category: { type: "string", description: "Bebas teks. Kategori baru otomatis tersedia." },
         price: { type: "number", minimum: 0 },
         cost: { type: "number", minimum: 0 },
       },
-      required: ["sku", "name", "price"],
+      required: ["name", "price"],
     },
   },
   {
@@ -115,12 +115,12 @@ export const TOOL_SPECS: ToolSpec[] = [
     parameters: {
       type: "object",
       properties: {
-        externalRef: { type: "string" },
+        externalRef: { type: "string", description: "Opsional. Dibuat otomatis jika kosong." },
         name: { type: "string" },
-        phone: { type: "string" },
-        email: { type: "string" },
+        phone: { type: "string", description: "Opsional." },
+        email: { type: "string", description: "Opsional." },
       },
-      required: ["externalRef", "name"],
+      required: ["name"],
     },
   },
   {

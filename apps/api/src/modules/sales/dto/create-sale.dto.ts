@@ -1,13 +1,59 @@
 import { Type } from "class-transformer";
-import { IsArray, IsISO8601, IsInt, IsNumber, IsOptional, IsString, Min, ValidateNested } from "class-validator";
+import { IsArray, IsEmail, IsInt, IsISO8601, IsNumber, IsOptional, IsString, Min, ValidateNested } from "class-validator";
+
+export class NewProductDto {
+  @IsOptional()
+  @IsString()
+  sku?: string;
+
+  @IsString()
+  name!: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  price?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  cost?: number;
+}
+
+export class NewCustomerDto {
+  @IsOptional()
+  @IsString()
+  externalRef?: string;
+
+  @IsString()
+  name!: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+}
 
 export class SaleItemDto {
   @IsOptional()
   @IsString()
   productId?: string;
 
+  @IsOptional()
   @IsString()
-  description!: string;
+  description?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NewProductDto)
+  newProduct?: NewProductDto;
 
   @IsInt()
   @Min(1)
@@ -25,6 +71,11 @@ export class CreateSaleDto {
   @IsOptional()
   @IsString()
   customerId?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NewCustomerDto)
+  newCustomer?: NewCustomerDto;
 
   @IsOptional()
   @IsString()

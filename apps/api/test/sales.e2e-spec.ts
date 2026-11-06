@@ -63,5 +63,5 @@ test("item tanpa deskripsi ditolak 400", async () => {
     .set("X-Tenant-Id", tenantId)
     .send({ occurredAt: "2026-10-27T04:00:00.000Z", items: [{ qty: 1, unitPrice: 1000 }] })
     .expect(400);
-  expect(res.body.code).toBe("BAD_REQUEST");
+  expect(res.body.code).toBe("SALE_INVALID");
 });

@@ -9,14 +9,14 @@ export class OverviewService {
     const startDate = from ? new Date(from) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const endDate = to ? new Date(to) : new Date();
     const sales = await this.prisma.sale.findMany({
-      where: { tenantId, occurredAt: { gte: startDate, lte: endDate } },
+      where: { tenantId, status: "posted", occurredAt: { gte: startDate, lte: endDate } },
       include: { items: true },
       orderBy: { occurredAt: "asc" },
     });
 
     const customerIds = Array.from(new Set(sales.map((s) => s.customerId).filter((id): id is string => Boolean(id))));
     const customers = customerIds.length
-      ? await this.prisma.customer.findMany({ where: { tenantId, id: { in: customerIds } }, select: { id: true, name: true } })
+      ? await this.prisma.customer.findMany({ where: { tenantId, archivedAt: null, id: { in: customerIds } }, select: { id: true, name: true } })
       : [];
     const customerName = new Map(customers.map((c) => [c.id, c.name]));
 
@@ -70,7 +70,7 @@ export class OverviewService {
       daily,
       topProducts,
       topCustomers,
-      recentSales: sales.slice(-5).reverse().map((s) => ({ id: s.id, occurredAt: s.occurredAt, total: Number(s.total).toFixed(2) })),
+      recentSales: sales.slice(-5).reverse().map((s) => ({ id: s.id, code: s.code, occurredAt: s.occurredAt, total: Number(s.total).toFixed(2) })),
     };
   }
 }

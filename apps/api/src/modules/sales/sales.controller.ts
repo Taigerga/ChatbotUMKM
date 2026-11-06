@@ -22,6 +22,34 @@ export class SalesController {
     return { sale: toSaleResponse(sale) };
   }
 
+  @Get("lines")
+  lines(
+    @CurrentTenant() tenantId: string,
+    @Query("from") from?: string,
+    @Query("to") to?: string,
+    @Query("customerId") customerId?: string,
+    @Query("productId") productId?: string,
+    @Query("category") category?: string,
+    @Query("source") source?: string,
+    @Query("status") status?: string,
+    @Query("q") q?: string,
+    @Query("limit") limit?: string,
+    @Query("offset") offset?: string,
+  ) {
+    return this.sales.lines(tenantId, {
+      from,
+      to,
+      customerId,
+      productId,
+      category,
+      source,
+      status,
+      q,
+      limit: limit ? Number(limit) : undefined,
+      offset: offset ? Number(offset) : undefined,
+    });
+  }
+
   @Get(":id")
   get(@CurrentTenant() tenantId: string, @Param("id") id: string) {
     return this.sales.get(tenantId, id);
@@ -33,15 +61,31 @@ export class SalesController {
   }
 
   @Delete(":id")
-  remove(@CurrentUser() auth: AuthContext, @CurrentTenant() tenantId: string, @Param("id") id: string) {
-    return this.sales.remove(tenantId, auth.userId, id);
+  remove(@CurrentUser() auth: AuthContext, @CurrentTenant() tenantId: string, @Param("id") id: string, @Query("reason") reason?: string) {
+    return this.sales.remove(tenantId, auth.userId, id, reason);
   }
+
+  @Post(":id/void")
+  voidSale(
+    @CurrentUser() auth: AuthContext,
+    @CurrentTenant() tenantId: string,
+    @Param("id") id: string,
+    @Body() body: { reason?: string },
+  ) {
+    return this.sales.remove(tenantId, auth.userId, id, body?.reason);
+  }
+
   @Get()
   async list(
     @CurrentTenant() tenantId: string,
     @Query("from") from?: string,
     @Query("to") to?: string,
     @Query("customerId") customerId?: string,
+    @Query("productId") productId?: string,
+    @Query("category") category?: string,
+    @Query("source") source?: string,
+    @Query("status") status?: string,
+    @Query("q") q?: string,
     @Query("limit") limit?: string,
     @Query("offset") offset?: string,
   ) {
@@ -49,6 +93,11 @@ export class SalesController {
       from,
       to,
       customerId,
+      productId,
+      category,
+      source,
+      status,
+      q,
       limit: limit ? Number(limit) : undefined,
       offset: offset ? Number(offset) : undefined,
     });

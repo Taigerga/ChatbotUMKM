@@ -50,9 +50,9 @@ export class MlService {
 
   async dataReadiness(tenantId: string) {
     const [sales, customers, products] = await Promise.all([
-      this.prisma.sale.findMany({ where: { tenantId }, select: { occurredAt: true, customerId: true, items: { select: { qty: true } } } }),
-      this.prisma.customer.count({ where: { tenantId } }),
-      this.prisma.product.count({ where: { tenantId } }),
+      this.prisma.sale.findMany({ where: { tenantId, status: "posted" }, select: { occurredAt: true, customerId: true, items: { select: { qty: true } } } }),
+      this.prisma.customer.count({ where: { tenantId, archivedAt: null } }),
+      this.prisma.product.count({ where: { tenantId, archivedAt: null } }),
     ]);
     const distinctDays = new Set(sales.map((s) => s.occurredAt.toISOString().slice(0, 10))).size;
     const distinctCustomers = new Set(sales.map((s) => s.customerId).filter(Boolean)).size;
