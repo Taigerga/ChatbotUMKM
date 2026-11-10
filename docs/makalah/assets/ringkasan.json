@@ -1,0 +1,1005 @@
+{
+  "ecommerce_sales_customer_analytics_150k": {
+    "baris": 138116,
+    "kolom": 46,
+    "duplikat_baris_penuh": 0,
+    "kolom_info": {
+      "order_id": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 138116
+      },
+      "order_date": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 1826
+      },
+      "order_time": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 68991
+      },
+      "order_status": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 4
+      },
+      "sales_channel": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 4
+      },
+      "customer_id": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 24911
+      },
+      "customer_name": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 21564
+      },
+      "customer_age": {
+        "tipe": "int64",
+        "terisi_pct": 100.0,
+        "unik": 57
+      },
+      "gender": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 3
+      },
+      "customer_segment": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 4
+      },
+      "customer_type": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 3
+      },
+      "customer_city": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 15516
+      },
+      "customer_state": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 38
+      },
+      "customer_country": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 7
+      },
+      "region": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 5
+      },
+      "customer_postal_code": {
+        "tipe": "int64",
+        "terisi_pct": 100.0,
+        "unik": 22117
+      },
+      "payment_method": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 7
+      },
+      "payment_status": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 4
+      },
+      "currency": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 7
+      },
+      "shipping_method": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 4
+      },
+      "warehouse": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 19
+      },
+      "delivery_days": {
+        "tipe": "float64",
+        "terisi_pct": 82.2,
+        "unik": 15
+      },
+      "estimated_delivery_days": {
+        "tipe": "float64",
+        "terisi_pct": 82.2,
+        "unik": 11
+      },
+      "delivery_status": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 4
+      },
+      "return_status": {
+        "tipe": "str",
+        "terisi_pct": 6.9,
+        "unik": 1
+      },
+      "return_reason": {
+        "tipe": "str",
+        "terisi_pct": 6.9,
+        "unik": 8
+      },
+      "customer_rating": {
+        "tipe": "float64",
+        "terisi_pct": 82.2,
+        "unik": 35
+      },
+      "review_sentiment": {
+        "tipe": "str",
+        "terisi_pct": 82.2,
+        "unik": 3
+      },
+      "customer_review": {
+        "tipe": "str",
+        "terisi_pct": 82.2,
+        "unik": 25
+      },
+      "marketing_channel": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 10
+      },
+      "campaign_name": {
+        "tipe": "str",
+        "terisi_pct": 39.7,
+        "unik": 17
+      },
+      "coupon_code": {
+        "tipe": "str",
+        "terisi_pct": 20.0,
+        "unik": 40
+      },
+      "loyalty_points_earned": {
+        "tipe": "int64",
+        "terisi_pct": 100.0,
+        "unik": 846
+      },
+      "loyalty_points_redeemed": {
+        "tipe": "int64",
+        "terisi_pct": 100.0,
+        "unik": 642
+      },
+      "quantity": {
+        "tipe": "int64",
+        "terisi_pct": 100.0,
+        "unik": 24
+      },
+      "gross_sales": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 102538
+      },
+      "discount_amount": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 64513
+      },
+      "tax_amount": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 49921
+      },
+      "shipping_cost": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 14857
+      },
+      "net_sales": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 115457
+      },
+      "product_cost": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 92646
+      },
+      "profit": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 96545
+      },
+      "profit_margin_percentage": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 7947
+      },
+      "customer_lifetime_value": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 24769
+      },
+      "is_repeat_customer": {
+        "tipe": "bool",
+        "terisi_pct": 100.0,
+        "unik": 2
+      },
+      "customer_order_count": {
+        "tipe": "int64",
+        "terisi_pct": 100.0,
+        "unik": 19
+      }
+    },
+    "deskriptif_numerik": {
+      "customer_age": {
+        "count": 138116.0,
+        "mean": 45.863,
+        "std": 16.468,
+        "min": 18.0,
+        "25%": 32.0,
+        "50%": 46.0,
+        "75%": 60.0,
+        "max": 74.0
+      },
+      "customer_postal_code": {
+        "count": 138116.0,
+        "mean": 50210.889,
+        "std": 28569.768,
+        "min": 516.0,
+        "25%": 25509.0,
+        "50%": 50183.0,
+        "75%": 74898.0,
+        "max": 99950.0
+      },
+      "delivery_days": {
+        "count": 113559.0,
+        "mean": 4.558,
+        "std": 2.81,
+        "min": 0.0,
+        "25%": 2.0,
+        "50%": 4.0,
+        "75%": 7.0,
+        "max": 14.0
+      },
+      "estimated_delivery_days": {
+        "count": 113559.0,
+        "mean": 4.299,
+        "std": 2.594,
+        "min": 0.0,
+        "25%": 2.0,
+        "50%": 4.0,
+        "75%": 6.0,
+        "max": 10.0
+      },
+      "customer_rating": {
+        "count": 113559.0,
+        "mean": 3.677,
+        "std": 0.484,
+        "min": 1.6,
+        "25%": 3.4,
+        "50%": 3.7,
+        "75%": 4.0,
+        "max": 5.0
+      },
+      "loyalty_points_earned": {
+        "count": 138116.0,
+        "mean": 103.991,
+        "std": 115.176,
+        "min": 0.0,
+        "25%": 17.0,
+        "50%": 70.0,
+        "75%": 151.0,
+        "max": 1621.0
+      },
+      "loyalty_points_redeemed": {
+        "count": 138116.0,
+        "mean": 51.934,
+        "std": 73.218,
+        "min": 0.0,
+        "25%": 3.0,
+        "50%": 25.0,
+        "75%": 71.0,
+        "max": 1063.0
+      },
+      "quantity": {
+        "count": 138116.0,
+        "mean": 5.615,
+        "std": 3.371,
+        "min": 1.0,
+        "25%": 3.0,
+        "50%": 5.0,
+        "75%": 8.0,
+        "max": 24.0
+      },
+      "gross_sales": {
+        "count": 138116.0,
+        "mean": 1375.384,
+        "std": 1291.01,
+        "min": 6.31,
+        "25%": 458.92,
+        "50%": 995.73,
+        "75%": 1871.2,
+        "max": 16051.19
+      },
+      "discount_amount": {
+        "count": 138116.0,
+        "mean": 237.622,
+        "std": 378.779,
+        "min": 0.0,
+        "25%": 26.328,
+        "50%": 103.285,
+        "75%": 277.125,
+        "max": 6759.02
+      },
+      "tax_amount": {
+        "count": 138116.0,
+        "mean": 122.463,
+        "std": 140.939,
+        "min": 0.34,
+        "25%": 34.65,
+        "50%": 77.01,
+        "75%": 156.2,
+        "max": 2091.52
+      },
+      "shipping_cost": {
+        "count": 138116.0,
+        "mean": 22.278,
+        "std": 16.023,
+        "min": 0.0,
+        "25%": 9.82,
+        "50%": 19.19,
+        "75%": 30.75,
+        "max": 149.52
+      },
+      "net_sales": {
+        "count": 138116.0,
+        "mean": 1282.504,
+        "std": 1169.275,
+        "min": 5.8,
+        "25%": 448.2,
+        "50%": 950.76,
+        "75%": 1744.582,
+        "max": 16218.0
+      },
+      "product_cost": {
+        "count": 138116.0,
+        "mean": 708.903,
+        "std": 730.045,
+        "min": 1.97,
+        "25%": 207.668,
+        "50%": 478.955,
+        "75%": 953.762,
+        "max": 9963.41
+      },
+      "profit": {
+        "count": 138116.0,
+        "mean": 551.322,
+        "std": 516.301,
+        "min": -1281.59,
+        "25%": 190.758,
+        "50%": 408.395,
+        "75%": 752.845,
+        "max": 7083.68
+      },
+      "profit_margin_percentage": {
+        "count": 138116.0,
+        "mean": 45.066,
+        "std": 13.12,
+        "min": -59.55,
+        "25%": 38.88,
+        "50%": 46.99,
+        "75%": 53.77,
+        "max": 77.59
+      },
+      "customer_lifetime_value": {
+        "count": 138116.0,
+        "mean": 8971.639,
+        "std": 4430.507,
+        "min": 22.55,
+        "25%": 5713.57,
+        "50%": 8392.525,
+        "75%": 11651.03,
+        "max": 30268.44
+      },
+      "customer_order_count": {
+        "count": 138116.0,
+        "mean": 6.991,
+        "std": 2.444,
+        "min": 1.0,
+        "25%": 5.0,
+        "50%": 7.0,
+        "75%": 9.0,
+        "max": 20.0
+      }
+    },
+    "id_duplikat": 0,
+    "id_unik": 138116,
+    "distribusi_rating": {
+      "1.6": {
+        "n": 2,
+        "pct": 0.0
+      },
+      "1.7": {
+        "n": 3,
+        "pct": 0.0
+      },
+      "1.8": {
+        "n": 8,
+        "pct": 0.0
+      },
+      "1.9": {
+        "n": 11,
+        "pct": 0.0
+      },
+      "2.0": {
+        "n": 32,
+        "pct": 0.0
+      },
+      "2.1": {
+        "n": 73,
+        "pct": 0.1
+      },
+      "2.2": {
+        "n": 131,
+        "pct": 0.1
+      },
+      "2.3": {
+        "n": 219,
+        "pct": 0.2
+      },
+      "2.4": {
+        "n": 313,
+        "pct": 0.2
+      },
+      "2.5": {
+        "n": 571,
+        "pct": 0.4
+      },
+      "2.6": {
+        "n": 898,
+        "pct": 0.7
+      },
+      "2.7": {
+        "n": 1288,
+        "pct": 0.9
+      },
+      "2.8": {
+        "n": 1806,
+        "pct": 1.3
+      },
+      "2.9": {
+        "n": 2527,
+        "pct": 1.8
+      },
+      "3.0": {
+        "n": 3407,
+        "pct": 2.5
+      },
+      "3.1": {
+        "n": 4476,
+        "pct": 3.2
+      },
+      "3.2": {
+        "n": 5502,
+        "pct": 4.0
+      },
+      "3.3": {
+        "n": 6618,
+        "pct": 4.8
+      },
+      "3.4": {
+        "n": 7591,
+        "pct": 5.5
+      },
+      "3.5": {
+        "n": 8755,
+        "pct": 6.3
+      },
+      "3.6": {
+        "n": 9085,
+        "pct": 6.6
+      },
+      "3.7": {
+        "n": 9362,
+        "pct": 6.8
+      },
+      "3.8": {
+        "n": 9263,
+        "pct": 6.7
+      },
+      "3.9": {
+        "n": 8744,
+        "pct": 6.3
+      },
+      "4.0": {
+        "n": 7718,
+        "pct": 5.6
+      },
+      "4.1": {
+        "n": 6628,
+        "pct": 4.8
+      },
+      "4.2": {
+        "n": 5347,
+        "pct": 3.9
+      },
+      "4.3": {
+        "n": 4177,
+        "pct": 3.0
+      },
+      "4.4": {
+        "n": 3165,
+        "pct": 2.3
+      },
+      "4.5": {
+        "n": 2197,
+        "pct": 1.6
+      },
+      "4.6": {
+        "n": 1451,
+        "pct": 1.1
+      },
+      "4.7": {
+        "n": 917,
+        "pct": 0.7
+      },
+      "4.8": {
+        "n": 551,
+        "pct": 0.4
+      },
+      "4.9": {
+        "n": 337,
+        "pct": 0.2
+      },
+      "5.0": {
+        "n": 386,
+        "pct": 0.3
+      }
+    },
+    "rating_rata2": 3.677,
+    "teks": {
+      "berteks": 113559,
+      "berteks_pct": 82.2,
+      "kata_median": 5.0,
+      "kata_rata2": 5.3
+    },
+    "per_bulan": {
+      "2021-01": 1906,
+      "2021-02": 1565,
+      "2021-03": 2166,
+      "2021-04": 1943,
+      "2021-05": 2096,
+      "2021-06": 2203,
+      "2021-07": 2036,
+      "2021-08": 2474,
+      "2021-09": 2134,
+      "2021-10": 2324,
+      "2021-11": 3139,
+      "2021-12": 3568,
+      "2022-01": 1934,
+      "2022-02": 1615,
+      "2022-03": 2126,
+      "2022-04": 2008,
+      "2022-05": 2041,
+      "2022-06": 2174,
+      "2022-07": 2011,
+      "2022-08": 2349,
+      "2022-09": 2124,
+      "2022-10": 2333,
+      "2022-11": 3257,
+      "2022-12": 3592,
+      "2023-01": 1926,
+      "2023-02": 1585,
+      "2023-03": 2134,
+      "2023-04": 2040,
+      "2023-05": 2054,
+      "2023-06": 2189,
+      "2023-07": 2010,
+      "2023-08": 2484,
+      "2023-09": 2190,
+      "2023-10": 2347,
+      "2023-11": 3177,
+      "2023-12": 3496,
+      "2024-01": 1965,
+      "2024-02": 1617,
+      "2024-03": 2202,
+      "2024-04": 2123,
+      "2024-05": 2048,
+      "2024-06": 2176,
+      "2024-07": 2029,
+      "2024-08": 2394,
+      "2024-09": 2181,
+      "2024-10": 2293,
+      "2024-11": 3297,
+      "2024-12": 3443,
+      "2025-01": 1962,
+      "2025-02": 1645,
+      "2025-03": 2194,
+      "2025-04": 2006,
+      "2025-05": 1999,
+      "2025-06": 2138,
+      "2025-07": 2121,
+      "2025-08": 2363,
+      "2025-09": 2226,
+      "2025-10": 2285,
+      "2025-11": 3191,
+      "2025-12": 3468
+    },
+    "kategori": {
+      "order_status": {
+        "Completed": 113559,
+        "Returned": 9462,
+        "Cancelled": 8398,
+        "Pending": 6697
+      },
+      "customer_segment": {
+        "Consumer": 75636,
+        "Premium": 34746,
+        "VIP": 13957,
+        "Business": 13777
+      }
+    }
+  },
+  "order_items": {
+    "baris": 397569,
+    "kolom": 12,
+    "duplikat_baris_penuh": 0,
+    "kolom_info": {
+      "order_id": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 138116
+      },
+      "product_id": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 1175
+      },
+      "quantity": {
+        "tipe": "int64",
+        "terisi_pct": 100.0,
+        "unik": 5
+      },
+      "unit_price": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 1164
+      },
+      "discount_percentage": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 343634
+      },
+      "discount_amount": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 50505
+      },
+      "gross_sales": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 5724
+      },
+      "tax_amount": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 29348
+      },
+      "shipping_cost": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 2948
+      },
+      "net_sales": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 125944
+      },
+      "product_cost": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 5516
+      },
+      "profit": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 78190
+      }
+    },
+    "deskriptif_numerik": {
+      "quantity": {
+        "count": 397569.0,
+        "mean": 2.119,
+        "std": 1.196,
+        "min": 1.0,
+        "25%": 1.0,
+        "50%": 2.0,
+        "75%": 3.0,
+        "max": 5.0
+      },
+      "unit_price": {
+        "count": 397569.0,
+        "mean": 245.189,
+        "std": 251.035,
+        "min": 6.31,
+        "25%": 74.36,
+        "50%": 164.97,
+        "75%": 310.79,
+        "max": 1482.95
+      },
+      "discount_percentage": {
+        "count": 397569.0,
+        "mean": 0.147,
+        "std": 0.13,
+        "min": 0.0,
+        "25%": 0.048,
+        "50%": 0.124,
+        "75%": 0.199,
+        "max": 0.6
+      },
+      "discount_amount": {
+        "count": 397569.0,
+        "mean": 89.668,
+        "std": 190.638,
+        "min": 0.0,
+        "25%": 5.94,
+        "50%": 26.34,
+        "75%": 86.03,
+        "max": 3857.67
+      },
+      "gross_sales": {
+        "count": 397569.0,
+        "mean": 519.014,
+        "std": 676.8,
+        "min": 6.31,
+        "25%": 122.0,
+        "50%": 280.19,
+        "75%": 643.56,
+        "max": 7414.75
+      },
+      "tax_amount": {
+        "count": 397569.0,
+        "mean": 46.184,
+        "std": 71.072,
+        "min": 0.26,
+        "25%": 9.56,
+        "50%": 22.55,
+        "75%": 52.34,
+        "max": 1482.95
+      },
+      "shipping_cost": {
+        "count": 397569.0,
+        "mean": 8.409,
+        "std": 6.777,
+        "min": 0.0,
+        "25%": 3.37,
+        "50%": 5.87,
+        "75%": 12.46,
+        "max": 36.46
+      },
+      "net_sales": {
+        "count": 397569.0,
+        "mean": 483.938,
+        "std": 615.43,
+        "min": 5.35,
+        "25%": 124.28,
+        "50%": 271.1,
+        "75%": 595.24,
+        "max": 8897.7
+      },
+      "product_cost": {
+        "count": 397569.0,
+        "mean": 267.52,
+        "std": 394.774,
+        "min": 1.97,
+        "25%": 52.96,
+        "50%": 127.1,
+        "75%": 314.31,
+        "max": 4968.15
+      },
+      "profit": {
+        "count": 397569.0,
+        "mean": 208.009,
+        "std": 266.478,
+        "min": -1260.28,
+        "25%": 53.73,
+        "50%": 121.66,
+        "75%": 259.66,
+        "max": 4045.1
+      }
+    },
+    "id_duplikat": 259453,
+    "id_unik": 138116
+  },
+  "customer_master": {
+    "baris": 25000,
+    "kolom": 11,
+    "duplikat_baris_penuh": 0,
+    "kolom_info": {
+      "customer_id": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 25000
+      },
+      "customer_name": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 21631
+      },
+      "customer_age": {
+        "tipe": "int64",
+        "terisi_pct": 100.0,
+        "unik": 57
+      },
+      "gender": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 3
+      },
+      "customer_segment": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 4
+      },
+      "customer_city": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 15555
+      },
+      "customer_state": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 38
+      },
+      "customer_country": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 7
+      },
+      "region": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 5
+      },
+      "customer_postal_code": {
+        "tipe": "int64",
+        "terisi_pct": 100.0,
+        "unik": 22183
+      },
+      "customer_acquisition_cost": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 7215
+      }
+    },
+    "deskriptif_numerik": {
+      "customer_age": {
+        "count": 25000.0,
+        "mean": 45.908,
+        "std": 16.454,
+        "min": 18.0,
+        "25%": 32.0,
+        "50%": 46.0,
+        "75%": 60.0,
+        "max": 74.0
+      },
+      "customer_postal_code": {
+        "count": 25000.0,
+        "mean": 50183.066,
+        "std": 28596.584,
+        "min": 516.0,
+        "25%": 25374.5,
+        "50%": 50303.0,
+        "75%": 74845.5,
+        "max": 99950.0
+      },
+      "customer_acquisition_cost": {
+        "count": 25000.0,
+        "mean": 42.16,
+        "std": 21.693,
+        "min": 5.01,
+        "25%": 23.298,
+        "50%": 41.98,
+        "75%": 61.13,
+        "max": 79.99
+      }
+    },
+    "kategori": {
+      "customer_segment": {
+        "Consumer": 13638,
+        "Premium": 6301,
+        "VIP": 2542,
+        "Business": 2519
+      }
+    }
+  },
+  "product_catalog": {
+    "baris": 1175,
+    "kolom": 9,
+    "duplikat_baris_penuh": 0,
+    "kolom_info": {
+      "product_id": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 1175
+      },
+      "product_name": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 1175
+      },
+      "product_category": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 15
+      },
+      "product_subcategory": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 117
+      },
+      "brand": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 144
+      },
+      "supplier": {
+        "tipe": "str",
+        "terisi_pct": 100.0,
+        "unik": 10
+      },
+      "unit_price": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 1164
+      },
+      "product_cost": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 1147
+      },
+      "product_rating": {
+        "tipe": "float64",
+        "terisi_pct": 100.0,
+        "unik": 25
+      }
+    },
+    "deskriptif_numerik": {
+      "unit_price": {
+        "count": 1175.0,
+        "mean": 245.524,
+        "std": 251.268,
+        "min": 6.31,
+        "25%": 74.71,
+        "50%": 165.42,
+        "75%": 311.295,
+        "max": 1482.95
+      },
+      "product_cost": {
+        "count": 1175.0,
+        "mean": 126.537,
+        "std": 150.132,
+        "min": 1.97,
+        "25%": 29.565,
+        "50%": 74.54,
+        "75%": 153.045,
+        "max": 993.63
+      },
+      "product_rating": {
+        "count": 1175.0,
+        "mean": 3.683,
+        "std": 0.698,
+        "min": 2.5,
+        "25%": 3.1,
+        "50%": 3.7,
+        "75%": 4.3,
+        "max": 4.9
+      }
+    }
+  }
+}
