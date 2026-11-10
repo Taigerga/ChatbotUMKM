@@ -100,6 +100,7 @@ def job(job_id: str, x_ml_token: str | None = Header(default=None)):
 
 class RFMRequest(BaseModel):
     customers: list[dict]
+    calibrate: bool = False
 
 
 class BasketRequest(BaseModel):
@@ -113,24 +114,35 @@ class ChurnRequest(BaseModel):
 
 class AnomalyRequest(BaseModel):
     series: list[dict]
+    calibrate: bool = False
 
 
 @app.post("/predict/forecasting")
-def predict_forecasting(horizon: int = 7, x_ml_token: str | None = Header(default=None)):
+def predict_forecasting(
+    horizon: int = 7,
+    target_daily: float | None = None,
+    x_ml_token: str | None = Header(default=None),
+):
     _auth(x_ml_token)
-    return {"predictions": forecasting.predict(horizon)}
+    return forecasting.predict(horizon, target_daily=target_daily)
 
 
 @app.post("/predict/rfm")
 def predict_rfm(req: RFMRequest, x_ml_token: str | None = Header(default=None)):
     _auth(x_ml_token)
-    return {"segments": rfm.predict(req.customers)}
+    return {"segments": rfm.predict(req.customers, calibrate=req.calibrate)}
 
 
 @app.post("/predict/mba")
 def predict_mba(req: BasketRequest, x_ml_token: str | None = Header(default=None)):
     _auth(x_ml_token)
     return {"recommendations": mba.predict(req.basket, req.top_n)}
+
+
+@app.get("/reference/mba")
+def reference_mba(limit: int = 3, x_ml_token: str | None = Header(default=None)):
+    _auth(x_ml_token)
+    return {"rules": mba.top_rules(limit)}
 
 
 @app.post("/predict/churn")
@@ -142,7 +154,7 @@ def predict_churn(req: ChurnRequest, x_ml_token: str | None = Header(default=Non
 @app.post("/predict/anomaly")
 def predict_anomaly(req: AnomalyRequest, x_ml_token: str | None = Header(default=None)):
     _auth(x_ml_token)
-    return {"anomalies": anomaly.predict(req.series)}
+    return {"anomalies": anomaly.predict(req.series, calibrate=req.calibrate)}
 
 
 class TenantTrainRequest(BaseModel):

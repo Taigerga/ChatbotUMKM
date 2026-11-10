@@ -117,13 +117,18 @@ def train(n_clusters: int | None = None) -> dict:
     return metadata
 
 
-def predict(customers: list[dict]) -> list[dict]:
+def predict(customers: list[dict], calibrate: bool = False) -> list[dict]:
     artifact = joblib.load(os.path.join(os.getenv("ARTIFACT_DIR", "./artifacts"), "rfm.joblib"))
     scaler = artifact["scaler"]
     model = artifact["model"]
     names = artifact.get("segment_names", {})
     frame = pd.DataFrame(customers)
     X = frame[["recency", "frequency", "monetary"]].values
+    if calibrate and len(X) >= 2:
+        # Skala fit ke pelanggan toko agar jarak cluster masuk akal; model global tetap.
+        tenant_scaler = StandardScaler().fit(X)
+        if np.all(np.isfinite(tenant_scaler.scale_)) and np.all(tenant_scaler.scale_ > 0):
+            scaler = tenant_scaler
     labels = model.predict(scaler.transform(X))
     return [
         {

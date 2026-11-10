@@ -28,24 +28,30 @@ export class MlService {
     return this.request(`/jobs/${id}`);
   }
 
-  async predictForecasting(horizon = 7) {
-    return this.request(`/predict/forecasting?horizon=${horizon}`, { method: "POST" });
+  async predictForecasting(horizon = 7, targetDaily?: number) {
+    const query = new URLSearchParams({ horizon: String(horizon) });
+    if (targetDaily && targetDaily > 0) query.set("target_daily", String(targetDaily));
+    return this.request(`/predict/forecasting?${query.toString()}`, { method: "POST" });
   }
 
-  async predictRfm(customers: unknown[]) {
-    return this.request("/predict/rfm", { method: "POST", body: JSON.stringify({ customers }) });
+  async predictRfm(customers: unknown[], calibrate = false) {
+    return this.request("/predict/rfm", { method: "POST", body: JSON.stringify({ customers, calibrate }) });
   }
 
   async predictMba(basket: string[], topN = 5) {
     return this.request("/predict/mba", { method: "POST", body: JSON.stringify({ basket, top_n: topN }) });
   }
 
+  async referenceMba(limit = 3) {
+    return this.request(`/reference/mba?limit=${limit}`);
+  }
+
   async predictChurn(customers: unknown[]) {
     return this.request("/predict/churn", { method: "POST", body: JSON.stringify({ customers }) });
   }
 
-  async predictAnomaly(series: unknown[]) {
-    return this.request("/predict/anomaly", { method: "POST", body: JSON.stringify({ series }) });
+  async predictAnomaly(series: unknown[], calibrate = false) {
+    return this.request("/predict/anomaly", { method: "POST", body: JSON.stringify({ series, calibrate }) });
   }
 
   async trainTenant(payload: unknown) {

@@ -94,3 +94,13 @@ def predict(basket: list[str], top_n: int = 5) -> list[dict]:
     recs = [r for r in rules if r["antecedent"] in basket and r["consequent"] not in basket]
     recs.sort(key=lambda r: r["lift"], reverse=True)
     return recs[:top_n]
+
+
+def top_rules(limit: int = 3) -> list[dict]:
+    """Aturan teratas dataset umum, dipakai sebagai contoh referensi."""
+    path = os.path.join(os.getenv("ARTIFACT_DIR", "./artifacts"), "mba.joblib")
+    if not os.path.exists(path):
+        return []
+    artifact = joblib.load(path)
+    rules = sorted(artifact["rules"], key=lambda r: (r["lift"], r["confidence"]), reverse=True)
+    return rules[:limit]

@@ -408,7 +408,7 @@ export class ChatService {
     if (name === "findCustomers") return this.readTools.findCustomers(tenantId, { query: String(args.query ?? "") });
     if (name === "topProducts") return this.readTools.topProducts(tenantId, { from: String(args.from ?? ""), to: String(args.to ?? ""), limit: args.limit ? Number(args.limit) : undefined });
     if (name === "topCustomers") return this.readTools.topCustomers(tenantId, { from: String(args.from ?? ""), to: String(args.to ?? ""), limit: args.limit ? Number(args.limit) : undefined });
-    if (name === "forecastSales") return this.readTools.forecastSales({ horizon: args.horizon ? Number(args.horizon) : undefined });
+    if (name === "forecastSales") return this.readTools.forecastSales({ horizon: args.horizon ? Number(args.horizon) : undefined }, tenantId);
     if (name === "rfmSegments") return this.readTools.rfmSegments(tenantId);
     if (name === "churnRisk") return this.readTools.churnRisk(tenantId);
     if (name === "anomalyDetection") return this.readTools.anomalyDetection(tenantId);

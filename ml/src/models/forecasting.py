@@ -74,15 +74,42 @@ def train() -> dict:
     return metadata
 
 
-def predict(horizon: int = 7) -> list[dict]:
-    artifact = joblib.load(os.path.join(os.getenv("ARTIFACT_DIR", "./artifacts"), "forecasting.joblib"))
+def predict(
+    horizon: int = 7,
+    target_daily: float | None = None,
+    anchor: str | None = None,
+) -> dict:
+    """Prediksi global. Bila target_daily diisi, skala angka disesuaikan ke toko.
+
+    Bentuk tren tetap dari model global; hanya besaran rupiah yang dikalibrasi.
+    Tanggal di-anchor ke hari ini agar tidak menampilkan tanggal artefak lama.
+    """
+    artifact = joblib.load(
+        os.path.join(os.getenv("ARTIFACT_DIR", "./artifacts"), "forecasting.joblib")
+    )
     model = artifact["model"]
     last_t = artifact["last_t"]
-    last_date = pd.to_datetime(artifact["last_date"])
-    out = []
-    for i in range(1, horizon + 1):
-        t = last_t + i
-        pred = float(model.predict([[t]])[0])
-        date = (last_date + pd.Timedelta(days=i)).date()
-        out.append({"date": str(date), "value": round(max(pred, 0), 2)})
-    return out
+
+    raw = [max(float(model.predict([[last_t + i]])[0]), 0.0) for i in range(1, horizon + 1)]
+    mean_raw = float(np.mean(raw)) if raw else 0.0
+
+    factor = 1.0
+    if target_daily and target_daily > 0 and mean_raw > 0:
+        factor = float(target_daily) / mean_raw
+
+    today = pd.Timestamp(anchor).date() if anchor else pd.Timestamp.today().date()
+    out = [
+        {
+            "date": str(today + pd.Timedelta(days=i)),
+            "value": round(value * factor, 2),
+        }
+        for i, value in enumerate(raw, start=1)
+    ]
+    return {
+        "predictions": out,
+        "calibration": {
+            "factor": round(factor, 4),
+            "target_daily": round(float(target_daily), 2) if target_daily else None,
+            "anchored_to": "today",
+        },
+    }

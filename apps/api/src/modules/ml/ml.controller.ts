@@ -63,8 +63,8 @@ export class MlController {
   // ---- Analisis cerdas: model global diterapkan ke data toko -----------------
 
   @Get("insights/forecast")
-  insightForecast(@Query("horizon") horizon?: string) {
-    return this.insights.forecastSales(Number(horizon) || 7);
+  insightForecast(@CurrentTenant() tenantId: string, @Query("horizon") horizon?: string) {
+    return this.insights.forecastSales(tenantId, Number(horizon) || 7);
   }
 
   @Get("insights/rfm")
@@ -83,8 +83,8 @@ export class MlController {
   }
 
   @Post("insights/mba")
-  insightMba(@Body() body: { basket: string[]; topN?: number }) {
-    return this.insights.marketBasket(body?.basket ?? [], body?.topN ?? 5);
+  insightMba(@CurrentTenant() tenantId: string, @Body() body?: { topN?: number }) {
+    return this.insights.basketInsight(tenantId, body?.topN ?? 5);
   }
 
   // ---- Model toko: latih 5 model dari data toko ------------------------------

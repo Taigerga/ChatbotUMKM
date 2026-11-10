@@ -99,8 +99,8 @@ export class ChatReadTools {
     return { from: args.from, to: args.to, items };
   }
 
-  async forecastSales(args: { horizon?: number }) {
-    return this.insights.forecastSales(args.horizon ?? 7);
+  async forecastSales(args: { horizon?: number }, tenantId?: string) {
+    return this.insights.forecastSales(tenantId ?? "", args.horizon ?? 7);
   }
 
   async rfmSegments(tenantId: string) {
