@@ -1,6 +1,6 @@
 export function formatRupiah(value: string | number): string {
   const number = typeof value === "number" ? value : Number(value);
-  return `Rp${Number.isFinite(number) ? number.toLocaleString("id-ID") : "0"}`;
+  return `Rp${Number.isFinite(number) ? number.toLocaleString("id-ID", { maximumFractionDigits: 0 }) : "0"}`;
 }
 
 export function formatDate(value: string | Date): string {

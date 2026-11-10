@@ -56,7 +56,7 @@ export function MarketingNav() {
               key={link.href}
               href={link.href}
               data-active={isActive(pathname, link.href)}
-              className="mk-link text-mk-muted hover:text-mk-ink data-[active=true]:text-mk-ink"
+              className="mk-link text-mk-muted hover:text-mk-ink data-[active=true]:text-mk-ink focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               {link.label}
             </Link>
@@ -67,7 +67,7 @@ export function MarketingNav() {
           <ThemeToggle />
           <Link
             href="/login"
-            className="bg-mk-ink text-mk-cream hidden rounded-full px-4 py-2 text-sm font-medium transition-transform duration-200 hover:-translate-y-0.5 sm:block"
+            className="bg-mk-ink text-mk-cream hidden rounded-full px-4 py-2 text-sm font-medium transition-transform duration-200 hover:-translate-y-0.5 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none sm:block"
           >
             Masuk
           </Link>
@@ -76,7 +76,7 @@ export function MarketingNav() {
             onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
             aria-label={open ? "Tutup menu" : "Buka menu"}
-            className="border-mk-line grid size-9 place-items-center rounded-full border md:hidden"
+            className="border-mk-line grid size-9 place-items-center rounded-full border focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none md:hidden"
           >
             {open ? <X className="size-4" aria-hidden /> : <Menu className="size-4" aria-hidden />}
           </button>
@@ -90,7 +90,7 @@ export function MarketingNav() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="hover:bg-mk-brand/15 rounded-2xl px-4 py-3 text-sm font-medium"
+                className="hover:bg-mk-brand/15 rounded-2xl px-4 py-3 text-sm font-medium focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
               >
                 {link.label}
               </Link>

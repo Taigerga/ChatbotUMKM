@@ -1,12 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { GraduationCap } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { formatRupiah } from "@/lib/format";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
-import { Input } from "@workspace/ui/components/input";
-import { statusBadge, MODEL_LABELS } from "./status-section";
+import { Progress } from "@workspace/ui/components/progress";
+import { Skeleton } from "@workspace/ui/components/skeleton";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@workspace/ui/components/accordion";
+import { HumanNote } from "@/components/warung/human-note";
+import { EmptyState } from "@/components/warung/empty-state";
+import { MODEL_LABELS, MODEL_PURPOSE, statusBadge } from "./status-section";
 import { DailySeriesChart, ForecastChart, withAnomalyFlags, type SeriesPoint } from "./ml-charts";
 
 type TenantModel = {
@@ -30,19 +35,16 @@ type TenantModel = {
 
 type Results = { models: Record<string, TenantModel | null> };
 
-function Bar({ value, max, label, right, color }: { value: number; max: number; label: string; right: string; color: string }) {
-  const pct = max > 0 ? Math.max(2, Math.round((value / max) * 100)) : 0;
-  return (
-    <div className="grid gap-1">
-      <div className="flex items-center justify-between gap-2 text-xs">
-        <span className="truncate font-medium">{label}</span>
-        <span className="text-muted-foreground shrink-0">{right}</span>
-      </div>
-      <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  );
+const SEGMENT_AWAM: Record<string, string> = {
+  Champion: "Pelanggan setia",
+  Loyal: "Pelanggan rutin",
+  "At Risk": "Perlu ditebus",
+  Lost: "Hampir hilang",
+};
+
+function labelSegmen(segment: string) {
+  const match = Object.keys(SEGMENT_AWAM).find((key) => segment.startsWith(key));
+  return match ? SEGMENT_AWAM[match] : segment;
 }
 
 function MetricLine({ label, value }: { label: string; value: string | number }) {
@@ -51,6 +53,37 @@ function MetricLine({ label, value }: { label: string; value: string | number })
       <span className="text-muted-foreground">{label}</span>
       <span className="font-mono">{value}</span>
     </div>
+  );
+}
+
+function TechnicalDetails({ model }: { model: TenantModel }) {
+  return (
+    <Accordion>
+      <AccordionItem value="detail">
+        <AccordionTrigger>Yang perlu diketahui</AccordionTrigger>
+        <AccordionContent>
+          <div className="text-muted-foreground grid gap-1 text-xs">
+            <span>Sampel latih: {model.samples.toLocaleString("id-ID")}</span>
+            <span>Rentang data: {model.data_range.join(" — ") || "-"}</span>
+            <span>Dilatih: {model.trained_at ? new Date(model.trained_at).toLocaleString("id-ID") : "-"}</span>
+          </div>
+          {Object.keys(model.metrics).length > 0 && (
+            <div className="mt-2 grid gap-1 md:grid-cols-2">
+              {Object.entries(model.metrics)
+                .filter(([, value]) => typeof value !== "object")
+                .map(([key, value]) => (
+                  <MetricLine key={key} label={key} value={String(value)} />
+                ))}
+            </div>
+          )}
+          <ul className="text-muted-foreground mt-2 list-disc pl-4 text-xs">
+            {model.limitations.map((limitation) => (
+              <li key={limitation}>{limitation}</li>
+            ))}
+          </ul>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 }
 
@@ -66,7 +99,7 @@ export default function TokoSection() {
       setResults(await apiFetch<Results>("/ml/tenant/results"));
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Layanan ML tidak tersedia.");
+      setError(err instanceof Error ? err.message : "Layanan analisis tidak tersedia.");
     }
   }, []);
 
@@ -78,7 +111,7 @@ export default function TokoSection() {
 
   const train = async () => {
     setTraining(true);
-    setStatus("Mengumpulkan data toko dan melatih 5 model...");
+    setStatus("Mengumpulkan data toko dan melatih lima model...");
     setError(null);
     try {
       const { job_id } = await apiFetch<{ job_id: string; status: string }>("/ml/tenant/train", {
@@ -113,301 +146,133 @@ export default function TokoSection() {
 
   const models = results?.models ?? {};
   const trained = Object.values(models).filter(Boolean) as TenantModel[];
-  const forecasting = models.forecasting;
-  const rfm = models.rfm;
-  const mba = models.mba;
-  const churn = models.churn;
-  const anomaly = models.anomaly;
+  const ordered = ["forecasting", "rfm", "mba", "churn", "anomaly"]
+    .map((name) => models[name])
+    .filter(Boolean) as TenantModel[];
+  const lastTrained = trained.find((m) => m.trained_at)?.trained_at;
 
   return (
-    <div className="grid gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-muted-foreground text-xs">
-          Lima model dilatih langsung dari data toko Anda: regresi penjualan, K-Means RFM, aturan asosiasi, regresi
-          logistik churn, dan z-score anomali.
-        </p>
-        <Button size="sm" onClick={train} disabled={training}>
-          {training ? "Melatih..." : trained.length > 0 ? "Latih ulang semua" : "Latih semua model"}
-        </Button>
-      </div>
-      {status && <p className="text-sm">{status}</p>}
-      {error && <p className="text-destructive text-sm">{error}</p>}
+    <div className="grid gap-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <p className="warung-eyebrow">Model khusus toko</p>
+          <CardTitle className="warung-title text-xl">Latih dari data toko sendiri</CardTitle>
+          <p className="text-muted-foreground text-xs">
+            Ini model terpisah yang belajar langsung dari nota toko. Butuh beberapa saat dan data yang cukup.
+          </p>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" onClick={train} disabled={training}>
+              <GraduationCap className="size-4" aria-hidden />
+              {training ? "Melatih..." : trained.length > 0 ? "Latih ulang model toko" : "Latih model toko"}
+            </Button>
+            <span className="text-muted-foreground text-xs">
+              {trained.length} dari 5 model siap{lastTrained ? ` · terakhir ${new Date(lastTrained).toLocaleString("id-ID")}` : ""}
+            </span>
+          </div>
+          <Progress value={training ? 60 : (trained.length / 5) * 100} aria-label="Progres pelatihan model toko" />
+          {status && <p className="text-sm">{status}</p>}
+          {error && <p className="text-destructive text-sm">{error}</p>}
+        </CardContent>
+      </Card>
 
-      {!results && !error && <p className="text-muted-foreground text-sm">Memuat status model toko...</p>}
+      {!results && !error && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[0, 1, 2, 3].map((n) => (
+            <Skeleton key={n} className="h-28 rounded-[10px]" />
+          ))}
+        </div>
+      )}
 
       {results && trained.length === 0 && (
-        <Card>
-          <CardContent className="text-muted-foreground py-8 text-center text-sm">
-            Model toko belum pernah dilatih. Klik <span className="font-medium">Latih semua model</span> untuk menjalankan
-            kelima model dari data transaksi toko Anda.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={GraduationCap}
+          title="Model toko belum dilatih"
+          description="Latih sekali untuk melihat ramalan, kelompok pelanggan, pasangan barang, risiko berhenti, dan hari tidak wajar versi toko Anda."
+          action={<Button size="sm" onClick={train} disabled={training}>Latih sekarang</Button>}
+        />
       )}
 
-      {forecasting && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle className="text-base">Ramalan Penjualan (model toko)</CardTitle>
-            {statusBadge(forecasting.status)}
+      {ordered.map((model) => (
+        <Card key={model.model}>
+          <CardHeader className="pb-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="warung-title text-lg">{MODEL_LABELS[model.model] ?? model.model}</CardTitle>
+              {statusBadge(model.status)}
+            </div>
+            <p className="text-muted-foreground text-xs">{MODEL_PURPOSE[model.model]}</p>
           </CardHeader>
-          <CardContent className="grid gap-2">
-            <p className="text-muted-foreground text-xs">{forecasting.reason}</p>
-            {forecasting.results.predictions?.length ? <ForecastChart data={forecasting.results.predictions} /> : null}
-            {typeof (forecasting.metrics.model as { mape_pct?: number } | undefined)?.mape_pct === "number" && (
-              <div className="grid gap-1 md:grid-cols-2">
-                <MetricLine label="MAPE model (%)" value={(forecasting.metrics.model as { mape_pct: number }).mape_pct} />
-                <MetricLine
-                  label="MAPE baseline naive (%)"
-                  value={String((forecasting.metrics.baseline_naive as { mape_pct?: number } | undefined)?.mape_pct ?? "-")}
-                />
-              </div>
-            )}
-            <ul className="text-muted-foreground list-disc pl-4 text-xs">
-              {forecasting.limitations.map((l) => (
-                <li key={l}>{l}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
+          <CardContent className="grid gap-3">
+            <p className="text-sm">{model.reason}</p>
 
-      {rfm && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle className="text-base">Segmentasi Pelanggan (model toko)</CardTitle>
-            {statusBadge(rfm.status)}
-          </CardHeader>
-          <CardContent className="grid gap-2">
-            <p className="text-muted-foreground text-xs">{rfm.reason}</p>
-            {rfm.results.summary?.length ? (
-              <div className="grid gap-2">
-                {rfm.results.summary
-                  .slice()
-                  .sort((a, b) => b.customers - a.customers)
-                  .map((s) => (
-                    <Bar
-                      key={s.segment}
-                      value={s.customers}
-                      max={Math.max(...rfm.results.summary!.map((x) => x.customers))}
-                      label={s.segment}
-                      right={`${s.customers} pelanggan · rata-rata ${formatRupiah(s.monetary)}`}
-                      color="bg-blue-600"
-                    />
-                  ))}
-              </div>
-            ) : null}
-            {rfm.results.segments?.length ? (
-              <details className="text-xs">
-                <summary className="text-muted-foreground cursor-pointer">Detail {rfm.results.segments.length} pelanggan</summary>
-                <div className="mt-2 grid gap-1">
-                  {rfm.results.segments
-                    .slice()
-                    .sort((a, b) => b.monetary - a.monetary)
-                    .slice(0, 30)
-                    .map((s) => (
-                      <div key={s.customer_id} className="flex items-center justify-between gap-2 border-b py-0.5">
-                        <span className="truncate">{s.name}</span>
-                        <span className="text-muted-foreground shrink-0">
-                          {s.segment} · {s.frequency}x · {formatRupiah(s.monetary)}
-                        </span>
-                      </div>
-                    ))}
-                </div>
-              </details>
-            ) : null}
-            <ul className="text-muted-foreground list-disc pl-4 text-xs">
-              {rfm.limitations.map((l) => (
-                <li key={l}>{l}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
-      {mba && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle className="text-base">Aturan Asosiasi Market Basket (model toko)</CardTitle>
-            {statusBadge(mba.status)}
-          </CardHeader>
-          <CardContent className="grid gap-2">
-            <p className="text-muted-foreground text-xs">{mba.reason}</p>
-            {mba.results.rules?.length ? <MbaRecommender rules={mba.results.rules} /> : null}
-            <ul className="text-muted-foreground list-disc pl-4 text-xs">
-              {mba.limitations.map((l) => (
-                <li key={l}>{l}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
-      {churn && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle className="text-base">Risiko Churn (model toko)</CardTitle>
-            {statusBadge(churn.status)}
-          </CardHeader>
-          <CardContent className="grid gap-2">
-            <p className="text-muted-foreground text-xs">{churn.reason}</p>
-            {churn.results.risks?.length ? (
-              <div className="grid gap-2">
-                {churn.results.risks.slice(0, 10).map((r) => (
-                  <Bar
-                    key={r.customer_id}
-                    value={r.churn_risk}
-                    max={Math.max(0.01, ...churn.results.risks!.map((x) => x.churn_risk))}
-                    label={r.name}
-                    right={`${Math.round(r.churn_risk * 100)}% risiko`}
-                    color="bg-red-600"
-                  />
-                ))}
-              </div>
-            ) : null}
-            {typeof churn.metrics.pr_auc === "number" && (
-              <div className="grid gap-1 md:grid-cols-2">
-                <MetricLine label="PR-AUC (holdout)" value={churn.metrics.pr_auc} />
-                <MetricLine label="Akurasi (holdout)" value={String(churn.metrics.accuracy ?? "-")} />
-              </div>
-            )}
-            <ul className="text-muted-foreground list-disc pl-4 text-xs">
-              {churn.limitations.map((l) => (
-                <li key={l}>{l}</li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
-      {anomaly && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle className="text-base">Deteksi Anomali (model toko)</CardTitle>
-            {statusBadge(anomaly.status)}
-          </CardHeader>
-          <CardContent className="grid gap-2">
-            <p className="text-muted-foreground text-xs">{anomaly.reason}</p>
-            {anomaly.results.series?.length ? (
+            {model.model === "forecasting" && model.results.predictions?.length ? (
               <>
-                <p className="text-muted-foreground text-xs">
-                  {anomaly.results.series.filter((row) => row.is_anomaly).length} hari anomali dari{" "}
-                  {anomaly.results.series.length} hari (titik merah).
-                </p>
-                <DailySeriesChart data={withAnomalyFlags(anomaly.results.series)} />
+                <ForecastChart data={model.results.predictions} />
+                <HumanNote>
+                  Rata-rata perkiraan {formatRupiah(
+                    model.results.predictions.reduce((sum, point) => sum + point.value, 0) / model.results.predictions.length,
+                  )} per hari. Siapkan stok barang laris di hari yang ramai.
+                </HumanNote>
               </>
             ) : null}
-            <ul className="text-muted-foreground list-disc pl-4 text-xs">
-              {anomaly.limitations.map((l) => (
-                <li key={l}>{l}</li>
-              ))}
-            </ul>
+
+            {model.model === "rfm" && model.results.summary?.length ? (
+              <div className="grid gap-2">
+                {model.results.summary
+                  .slice()
+                  .sort((a, b) => b.customers - a.customers)
+                  .map((summary) => (
+                    <div key={summary.segment} className="flex flex-wrap items-center justify-between gap-2 border-b py-1 text-sm last:border-0">
+                      <span className="font-medium">{labelSegmen(summary.segment)}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {summary.customers} pelanggan · rata-rata {formatRupiah(summary.monetary)}
+                      </span>
+                    </div>
+                  ))}
+                <HumanNote>Rawat kelompok paling ramai lebih dulu; mereka penyumbang omzet terbesar.</HumanNote>
+              </div>
+            ) : null}
+
+            {model.model === "mba" && model.results.rules?.length ? (
+              <div className="grid gap-1">
+                {model.results.rules.slice(0, 8).map((rule, index) => (
+                  <div key={index} className="flex flex-wrap items-center justify-between gap-2 border-b py-1 text-sm last:border-0">
+                    <span>
+                      Pembeli {rule.antecedent} juga beli {rule.consequent}
+                    </span>
+                    <span className="text-muted-foreground text-xs">{Math.round(rule.confidence * 100)}% pembeli lanjut beli</span>
+                  </div>
+                ))}
+                <HumanNote>Tawarkan barang kedua saat pelanggan mengambil barang pertama. Uji sebentar, lihat apakah tambahan terjual.</HumanNote>
+              </div>
+            ) : null}
+
+            {model.model === "churn" && model.results.risks?.length ? (
+              <div className="grid gap-1">
+                {model.results.risks.slice(0, 10).map((risk) => (
+                  <div key={risk.customer_id} className="flex flex-wrap items-center justify-between gap-2 border-b py-1 text-sm last:border-0">
+                    <span className="font-medium">{risk.name}</span>
+                    <span className="text-muted-foreground text-xs">skor {risk.churn_risk.toFixed(2)} — hubungi lewat WhatsApp</span>
+                  </div>
+                ))}
+                <HumanNote>Hubungi pelanggan di urutan atas lebih dulu. Tawarkan barang yang biasa mereka beli.</HumanNote>
+              </div>
+            ) : null}
+
+            {model.model === "anomaly" && model.results.series?.length ? (
+              <>
+                <DailySeriesChart data={withAnomalyFlags(model.results.series)} />
+                <p className="text-muted-foreground text-xs">
+                  {model.results.series.filter((row) => row.is_anomaly).length} hari jauh dari kebiasaan dari {model.results.series.length} hari (titik merah).
+                </p>
+              </>
+            ) : null}
+
+            <TechnicalDetails model={model} />
           </CardContent>
         </Card>
-      )}
-
-      {results && trained.length > 0 && (
-        <p className="text-muted-foreground text-xs">
-          {trained.length} dari 5 model terlatih. Dilatih terakhir:{" "}
-          {trained.find((m) => m.trained_at)?.trained_at
-            ? new Date(trained.find((m) => m.trained_at)!.trained_at!).toLocaleString("id-ID")
-            : "-"}
-          . {Object.keys(MODEL_LABELS).length - trained.length} model belum terlatih.
-        </p>
-      )}
-    </div>
-  );
-}
-
-function MbaRecommender({ rules }: { rules: NonNullable<TenantModel["results"]["rules"]> }) {
-  const [basket, setBasket] = useState<string[]>([]);
-  const [input, setInput] = useState("");
-  const options = Array.from(new Set(rules.flatMap((r) => [r.antecedent, r.consequent]))).sort();
-
-  const add = () => {
-    const name = input.trim();
-    if (name && !basket.includes(name)) setBasket([...basket, name]);
-    setInput("");
-  };
-
-  const recs = rules
-    .filter((r) => basket.includes(r.antecedent) && !basket.includes(r.consequent))
-    .sort((a, b) => b.lift - a.lift)
-    .slice(0, 8);
-
-  return (
-    <div className="grid gap-2">
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="grid gap-1 text-xs">
-          Simulasi keranjang
-          <Input
-            list="toko-product-list"
-            value={input}
-            placeholder="Ketik nama produk..."
-            className="w-64"
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                add();
-              }
-            }}
-          />
-        </label>
-        <datalist id="toko-product-list">
-          {options.map((name) => (
-            <option key={name} value={name} />
-          ))}
-        </datalist>
-        <Button size="sm" variant="outline" onClick={add} disabled={!input.trim()}>
-          Tambah
-        </Button>
-      </div>
-      {basket.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {basket.map((item) => (
-            <button
-              key={item}
-              type="button"
-              className="bg-secondary text-secondary-foreground rounded px-2 py-0.5 text-xs"
-              onClick={() => setBasket(basket.filter((b) => b !== item))}
-            >
-              {item} ✕
-            </button>
-          ))}
-        </div>
-      )}
-      {recs.length > 0 ? (
-        <div className="grid gap-1">
-          {recs.map((rec, i) => (
-            <div key={i} className="flex items-center justify-between gap-2 border-b py-1 text-xs">
-              <span>
-                Karena <span className="font-medium">{rec.antecedent}</span> → rekomendasi{" "}
-                <span className="font-medium">{rec.consequent}</span>
-              </span>
-              <span className="text-muted-foreground shrink-0">
-                confidence {Math.round(rec.confidence * 100)}% · lift {rec.lift}
-              </span>
-            </div>
-          ))}
-        </div>
-      ) : (
-        basket.length > 0 && <p className="text-muted-foreground text-xs">Tidak ada aturan untuk kombinasi keranjang ini.</p>
-      )}
-      <details className="text-xs">
-        <summary className="text-muted-foreground cursor-pointer">Lihat {rules.length} aturan asosiasi</summary>
-        <div className="mt-2 grid gap-1">
-          {rules.slice(0, 30).map((r, i) => (
-            <div key={i} className="flex items-center justify-between gap-2 border-b py-0.5">
-              <span>
-                {r.antecedent} → {r.consequent}
-              </span>
-              <span className="text-muted-foreground shrink-0">
-                support {r.support} · conf {Math.round(r.confidence * 100)}% · lift {r.lift}
-              </span>
-            </div>
-          ))}
-        </div>
-      </details>
+      ))}
     </div>
   );
 }

@@ -95,10 +95,12 @@ def _train_forecasting(tenant_id: str, daily: list[dict], horizon: int) -> dict[
 
     model = LinearRegression().fit(frame[["t"]], frame["value"])
     last_date = frame["date"].max()
+    # Selalu tampilkan tanggal ke depan; data toko bisa berhenti beberapa hari lalu.
+    anchor = max(last_date, pd.Timestamp.today().normalize())
     predictions = []
     for i in range(1, horizon + 1):
         pred = float(model.predict(pd.DataFrame({"t": [len(frame) - 1 + i]}))[0])
-        predictions.append({"date": str((last_date + pd.Timedelta(days=i)).date()), "value": round(max(pred, 0), 2)})
+        predictions.append({"date": str((anchor + pd.Timedelta(days=i)).date()), "value": round(max(pred, 0), 2)})
 
     metadata = {
         "model": "forecasting",
