@@ -388,9 +388,16 @@ export class MlInsightsService {
         total_spend: a ? Number(a.total.toFixed(2)) : 0,
       };
     });
+    // Hari tanpa nota diisi 0 supaya ramalan & anomali toko memakai penyebut hari kalender,
+    // sebanding dengan tab Analisis cerdas.
+    const daily = zeroFill(
+      Array.from(dailyMap.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, value]) => ({ date, value: Number(value.toFixed(2)) })),
+    );
     return {
       tenant_id: tenantId,
-      daily: Array.from(dailyMap.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([date, value]) => ({ date, value: Number(value.toFixed(2)) })),
+      daily,
       customers: customerRows,
       transactions: baskets.filter((basket) => basket.length >= 2).map((basket) => Array.from(new Set(basket))),
       horizon,

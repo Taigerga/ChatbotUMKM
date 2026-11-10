@@ -83,8 +83,9 @@ def _train_forecasting(tenant_id: str, daily: list[dict], horizon: int) -> dict[
 
     def metrics(a: np.ndarray, p: np.ndarray) -> dict:
         mae = float(np.mean(np.abs(a - p))) if len(a) else 0.0
-        denom = np.where(a == 0, 1.0, a)
-        mape = float(np.mean(np.abs((a - p) / denom)) * 100) if len(a) else 0.0
+        # Hari tanpa nota diisi 0, jadi MAPE dihitung hanya pada hari ada penjualan.
+        nonzero = a != 0
+        mape = float(np.mean(np.abs((a[nonzero] - p[nonzero]) / a[nonzero])) * 100) if nonzero.any() else 0.0
         return {"mae": round(mae, 2), "mape_pct": round(mape, 2)}
 
     metrics_out = {
@@ -111,6 +112,7 @@ def _train_forecasting(tenant_id: str, daily: list[dict], horizon: int) -> dict[
         "data_range": [str(frame["date"].min().date()), str(frame["date"].max().date())],
         "limitations": [
             "Regresi linear pada indeks hari: tidak menangkap musiman atau hari libur.",
+            "Hari tanpa nota dihitung 0, jadi angka adalah rata-rata per hari kalender.",
             "Evaluasi memakai 30 hari terakhir sebagai holdout.",
         ],
     }
@@ -341,11 +343,17 @@ def _train_anomaly(tenant_id: str, daily: list[dict]) -> dict[str, Any]:
         "metrics": {"threshold_z": 3.5, "method": "robust z-score median+MAD per hari-dalam-minggu", "weekday_days": {k: v["days"] for k, v in weekday_stats.items()}},
         "limitations": [
             "Baseline dari penjualan harian toko Anda.",
+            "Hari tanpa nota dihitung 0, jadi hari tutup bisa terbaca sebagai penurunan.",
             "Anomali statistik bukan bukti kecurangan; hari libur bisa terbaca anomali.",
         ],
     }
     _save(tenant_id, "anomaly", {"weekday_stats": weekday_stats, "threshold": 3.5}, metadata)
     return {**metadata, "series": series}
+
+
+def _angka(value: float) -> str:
+    """Format angka desimal dengan koma, sesuai kebiasaan Indonesia."""
+    return f"{float(value):.2f}".replace(".", ",")
 
 
 def _merge_results(tenant_id: str, model_name: str, out: dict[str, Any]) -> None:
@@ -402,11 +410,19 @@ def results(tenant_id: str) -> dict[str, Any]:
                 model_mape = metrics.get("model", {}).get("mape_pct")
                 naive_mape = metrics.get("baseline_naive", {}).get("mape_pct")
                 if model_mape is not None and naive_mape is not None and model_mape > naive_mape:
-                    status, reason = "limited", f"MAPE model {model_mape}% lebih buruk dari baseline naive {naive_mape}%; ramalan hanya indikatif."
+                    status, reason = (
+                        "limited",
+                        f"Tingkat meleset ramalan {_angka(model_mape)}% pada uji 30 hari terakhir, "
+                        f"masih di atas patokan sederhana {_angka(naive_mape)}%. Angka ramalan hanya gambaran kasar.",
+                    )
             if name == "churn":
                 pr_auc = metrics.get("pr_auc")
                 if pr_auc is not None and pr_auc < 0.5:
-                    status, reason = "limited", f"PR-AUC {pr_auc} di bawah 0.5; skor risiko hanya indikatif."
+                    status, reason = (
+                        "limited",
+                        f"Model masih ragu membedakan pelanggan yang berhenti dan yang bertahan (skor {_angka(pr_auc)}). "
+                        "Pakai daftar risiko sebagai petunjuk, bukan kepastian.",
+                    )
             out[name] = {
                 "model": name,
                 "scope": "tenant",

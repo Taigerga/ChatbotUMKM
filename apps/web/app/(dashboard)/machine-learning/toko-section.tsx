@@ -3,16 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GraduationCap } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-import { formatRupiah } from "@/lib/format";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Progress } from "@workspace/ui/components/progress";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@workspace/ui/components/accordion";
-import { HumanNote } from "@/components/warung/human-note";
 import { EmptyState } from "@/components/warung/empty-state";
 import { MODEL_LABELS, MODEL_PURPOSE, statusBadge } from "./status-section";
-import { DailySeriesChart, ForecastChart, withAnomalyFlags, type SeriesPoint } from "./ml-charts";
 
 type TenantModel = {
   model: string;
@@ -23,29 +20,9 @@ type TenantModel = {
   data_range: string[];
   trained_at?: string;
   limitations: string[];
-  results: {
-    predictions?: { date: string; value: number }[];
-    segments?: { customer_id: string; name: string; segment: string; frequency: number; monetary: number }[];
-    summary?: { segment: string; customers: number; recency: number; freq: number; monetary: number }[];
-    rules?: { antecedent: string; consequent: string; support: number; confidence: number; lift: number }[];
-    risks?: { customer_id: string; name: string; churn_risk: number }[];
-    series?: SeriesPoint[];
-  };
 };
 
 type Results = { models: Record<string, TenantModel | null> };
-
-const SEGMENT_AWAM: Record<string, string> = {
-  Champion: "Pelanggan setia",
-  Loyal: "Pelanggan rutin",
-  "At Risk": "Perlu ditebus",
-  Lost: "Hampir hilang",
-};
-
-function labelSegmen(segment: string) {
-  const match = Object.keys(SEGMENT_AWAM).find((key) => segment.startsWith(key));
-  return match ? SEGMENT_AWAM[match] : segment;
-}
 
 function MetricLine({ label, value }: { label: string; value: string | number }) {
   return (
@@ -158,7 +135,8 @@ export default function TokoSection() {
           <p className="warung-eyebrow">Model khusus toko</p>
           <CardTitle className="warung-title text-xl">Latih dari data toko sendiri</CardTitle>
           <p className="text-muted-foreground text-xs">
-            Ini model terpisah yang belajar langsung dari nota toko. Butuh beberapa saat dan data yang cukup.
+            Tab ini hanya memeriksa kesiapan model. Semua angka hasil analisis ada di tab Analisis cerdas,
+            supaya tidak ada dua versi angka untuk hal yang sama.
           </p>
         </CardHeader>
         <CardContent className="grid gap-3">
@@ -189,7 +167,7 @@ export default function TokoSection() {
         <EmptyState
           icon={GraduationCap}
           title="Model toko belum dilatih"
-          description="Latih sekali untuk melihat ramalan, kelompok pelanggan, pasangan barang, risiko berhenti, dan hari tidak wajar versi toko Anda."
+          description="Latih sekali untuk memastikan kelima model siap dipakai pada data toko Anda."
           action={<Button size="sm" onClick={train} disabled={training}>Latih sekarang</Button>}
         />
       )}
@@ -205,70 +183,6 @@ export default function TokoSection() {
           </CardHeader>
           <CardContent className="grid gap-3">
             <p className="text-sm">{model.reason}</p>
-
-            {model.model === "forecasting" && model.results.predictions?.length ? (
-              <>
-                <ForecastChart data={model.results.predictions} />
-                <HumanNote>
-                  Rata-rata perkiraan {formatRupiah(
-                    model.results.predictions.reduce((sum, point) => sum + point.value, 0) / model.results.predictions.length,
-                  )} per hari. Siapkan stok barang laris di hari yang ramai.
-                </HumanNote>
-              </>
-            ) : null}
-
-            {model.model === "rfm" && model.results.summary?.length ? (
-              <div className="grid gap-2">
-                {model.results.summary
-                  .slice()
-                  .sort((a, b) => b.customers - a.customers)
-                  .map((summary) => (
-                    <div key={summary.segment} className="flex flex-wrap items-center justify-between gap-2 border-b py-1 text-sm last:border-0">
-                      <span className="font-medium">{labelSegmen(summary.segment)}</span>
-                      <span className="text-muted-foreground text-xs">
-                        {summary.customers} pelanggan · rata-rata {formatRupiah(summary.monetary)}
-                      </span>
-                    </div>
-                  ))}
-                <HumanNote>Rawat kelompok paling ramai lebih dulu; mereka penyumbang omzet terbesar.</HumanNote>
-              </div>
-            ) : null}
-
-            {model.model === "mba" && model.results.rules?.length ? (
-              <div className="grid gap-1">
-                {model.results.rules.slice(0, 8).map((rule, index) => (
-                  <div key={index} className="flex flex-wrap items-center justify-between gap-2 border-b py-1 text-sm last:border-0">
-                    <span>
-                      Pembeli {rule.antecedent} juga beli {rule.consequent}
-                    </span>
-                    <span className="text-muted-foreground text-xs">{Math.round(rule.confidence * 100)}% pembeli lanjut beli</span>
-                  </div>
-                ))}
-                <HumanNote>Tawarkan barang kedua saat pelanggan mengambil barang pertama. Uji sebentar, lihat apakah tambahan terjual.</HumanNote>
-              </div>
-            ) : null}
-
-            {model.model === "churn" && model.results.risks?.length ? (
-              <div className="grid gap-1">
-                {model.results.risks.slice(0, 10).map((risk) => (
-                  <div key={risk.customer_id} className="flex flex-wrap items-center justify-between gap-2 border-b py-1 text-sm last:border-0">
-                    <span className="font-medium">{risk.name}</span>
-                    <span className="text-muted-foreground text-xs">skor {risk.churn_risk.toFixed(2)} — hubungi lewat WhatsApp</span>
-                  </div>
-                ))}
-                <HumanNote>Hubungi pelanggan di urutan atas lebih dulu. Tawarkan barang yang biasa mereka beli.</HumanNote>
-              </div>
-            ) : null}
-
-            {model.model === "anomaly" && model.results.series?.length ? (
-              <>
-                <DailySeriesChart data={withAnomalyFlags(model.results.series)} />
-                <p className="text-muted-foreground text-xs">
-                  {model.results.series.filter((row) => row.is_anomaly).length} hari jauh dari kebiasaan dari {model.results.series.length} hari (titik merah).
-                </p>
-              </>
-            ) : null}
-
             <TechnicalDetails model={model} />
           </CardContent>
         </Card>
