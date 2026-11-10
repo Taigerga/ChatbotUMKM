@@ -27,7 +27,7 @@ export function ChatComposer({
 
   return (
     <form
-      className="border-t bg-background p-3"
+      className="bg-card border-t p-3"
       onSubmit={(event) => {
         event.preventDefault();
         if (value.trim() && !busy) onSend();

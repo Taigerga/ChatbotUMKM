@@ -104,7 +104,7 @@ export default function FiturPage() {
       </section>
 
       <section className="px-4 pb-24">
-        <div className="mk-halo mk-card mx-auto flex max-w-5xl flex-col items-start gap-6 p-8 sm:flex-row sm:items-center sm:justify-between sm:p-12">
+        <div className="mk-card mx-auto flex max-w-5xl flex-col items-start gap-6 p-8 sm:flex-row sm:items-center sm:justify-between sm:p-12">
           <div>
             <h2 className="mk-display text-[clamp(1.8rem,3.5vw,2.8rem)]">Coba langsung, tanpa pasang apa pun.</h2>
             <p className="text-mk-muted mt-3 flex items-center gap-2 text-sm">
@@ -229,7 +229,7 @@ function FeatureMock({ kind }: { kind: string }) {
   return (
     <div className="border-mk-line bg-mk-cream/50 grid gap-2 rounded-2xl border p-4 text-xs">
       {["Siapa pelanggan paling sering beli?", "Penjualan minggu lalu berapa?", "Produk apa yang stoknya menipis?"].map((question) => (
-        <p key={question} className="border-mk-line rounded-xl border px-3 py-2">
+        <p key={question} className="border-mk-line rounded-[10px] border px-3 py-2">
           {question}
         </p>
       ))}

@@ -174,7 +174,9 @@ Urutan kartu: Ramalan → Pelanggan → Risiko berhenti → Hari tidak wajar →
 - Scaler di-fit pada fitur pelanggan toko; model KMeans global tetap dipakai untuk menetapkan cluster.
 - Label segmen tetap dari model global, diterjemahkan di UI.
 
-**Churn** — model global tetap. API mengubah skor menjadi band prioritas berdasarkan kuantil populasi toko:
+**Churn** — **diputuskan dari uji banding: Logistic Regression untuk global dan toko.** Uji pada data 150k (24.707 pelanggan) menunjukkan PR-AUC RandomForest 0.3363 vs Logistic Regression 0.3275 (5 seed; selisih di dalam variasi antar seed), sementara proporsi churn dasar 0.3316 — kedua model lemah, jadi konsistensi menang. Artefak global dilatih ulang dengan `StandardScaler + LogisticRegression(class_weight="balanced")`; fitur dan label 365 hari tidak berubah.
+
+API mengubah skor menjadi band prioritas berdasarkan kuantil populasi toko:
 - Hanya pelanggan yang pernah bertransaksi (`order_count > 0`) yang masuk daftar dan band. Pelanggan tanpa transaksi tidak ditampilkan sebagai "9999 hari".
 - `high` = 10% teratas (minimal 1), `medium` = 20% berikutnya (minimal 1), sisanya `low`.
 - Bila pelanggan bertransaksi < 5, semua `medium` + catatan "data masih sedikit".

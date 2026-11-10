@@ -69,7 +69,7 @@ export default function CaraKerjaPage() {
                   </div>
                   <ul className="grid gap-2 text-sm">
                     {step.detail.map((item) => (
-                      <li key={item} className="border-mk-line flex items-center gap-2 rounded-xl border px-3 py-2">
+                      <li key={item} className="border-mk-line flex items-center gap-2 rounded-[10px] border px-3 py-2">
                         <ChevronRight className="text-mk-brand-deep size-3.5 shrink-0" aria-hidden />
                         {item}
                       </li>
@@ -104,7 +104,7 @@ export default function CaraKerjaPage() {
       </section>
 
       <section className="px-4 py-20">
-        <div className="mk-halo mk-card mx-auto max-w-5xl p-8 sm:p-12">
+        <div className="mk-card mx-auto max-w-5xl p-8 sm:p-12">
           <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr] lg:items-center">
             <div>
               <h2 className="mk-display text-[clamp(1.8rem,3.5vw,2.8rem)]">Mau lihat harganya dulu?</h2>

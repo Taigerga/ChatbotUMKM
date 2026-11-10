@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <PreferencesProvider>
-      <div className="flex min-h-svh">
+      <div className="dash dash-grain flex min-h-svh">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <Header storeName={storeName} userName={me.user.name} />

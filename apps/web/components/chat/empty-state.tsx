@@ -12,11 +12,11 @@ const SUGGESTIONS = [
 export function ChatEmptyState({ onPick }: { onPick: (text: string) => void }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
-      <div className="bg-muted flex size-12 items-center justify-center rounded-full">
+      <div className="bg-primary/15 grid size-12 place-items-center rounded-full">
         <Bot className="size-6" aria-hidden />
       </div>
       <div>
-        <h2 className="text-lg font-semibold">Halo, saya asisten toko Anda</h2>
+        <h2 className="warung-title text-xl">Halo, saya asisten toko Anda</h2>
         <p className="text-muted-foreground mt-1 text-sm">
           Tanyakan analitik penjualan atau minta saya mencatat transaksi. Saya tidak akan menyimpan data sebelum Anda setujui.
         </p>

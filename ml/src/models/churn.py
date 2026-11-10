@@ -2,9 +2,11 @@ import os
 
 import joblib
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 from src.metadata import build_metadata, save_artifact
 
@@ -89,8 +91,9 @@ def train() -> dict:
         )
         split_note = "Data tidak cukup untuk split waktu; dipakai split acak bertingkat."
 
-    holdout = RandomForestClassifier(
-        n_estimators=200, random_state=42, class_weight="balanced"
+    holdout = make_pipeline(
+        StandardScaler(),
+        LogisticRegression(max_iter=2000, class_weight="balanced"),
     ).fit(X_train, y_train)
     proba = holdout.predict_proba(X_test)[:, 1]
     metrics = {
@@ -102,13 +105,14 @@ def train() -> dict:
         "split": split_note,
     }
 
-    model = RandomForestClassifier(
-        n_estimators=200, random_state=42, class_weight="balanced"
+    model = make_pipeline(
+        StandardScaler(),
+        LogisticRegression(max_iter=2000, class_weight="balanced"),
     ).fit(X, y)
     metadata = build_metadata(
         "churn",
         samples=len(data),
-        metrics=metrics,
+        metrics={**metrics, "algorithm": "logistic_regression"},
         data_range=[str(OBS_END.date()), str(LABEL_END.date())],
         limitations=limitations,
     )

@@ -10,11 +10,16 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { ReceiptText } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { formatDate, formatRupiah, toDateInput } from "@/lib/format";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
+import { Skeleton } from "@workspace/ui/components/skeleton";
+import { SectionHeader } from "@/components/warung/section-header";
+import { StatStrip } from "@/components/warung/stat-strip";
+import { EmptyState } from "@/components/warung/empty-state";
 
 type Summary = {
   period: { from: string; to: string };
@@ -59,17 +64,27 @@ export default function OverviewPage() {
 
   return (
     <div className="grid gap-4 p-4 dash-stagger">
+      <SectionHeader
+        eyebrow="Ringkasan toko"
+        title="Papan hari ini"
+        description={`Penjualan ${formatDate(range.from)} sampai ${formatDate(range.to)}.`}
+        action={
+          <div className="flex flex-wrap items-end gap-2">
+            {[7, 30, 90].map((days) => (
+              <Button
+                key={days}
+                size="sm"
+                variant={range.from === rangeDays(days).from && range.to === rangeDays(days).to ? "default" : "outline"}
+                onClick={() => setRange(rangeDays(days))}
+              >
+                {days} hari
+              </Button>
+            ))}
+          </div>
+        }
+      />
+
       <div className="flex flex-wrap items-end gap-2">
-        {[7, 30, 90].map((days) => (
-          <Button
-            key={days}
-            size="sm"
-            variant={range.from === rangeDays(days).from && range.to === rangeDays(days).to ? "default" : "outline"}
-            onClick={() => setRange(rangeDays(days))}
-          >
-            {days} hari
-          </Button>
-        ))}
         <label className="grid gap-1 text-xs">
           Dari
           <Input type="date" value={range.from} max={range.to} onChange={(e) => setRange({ ...range, from: e.target.value })} />
@@ -85,39 +100,40 @@ export default function OverviewPage() {
 
       {error && <p className="text-destructive text-sm">{error}</p>}
 
+      {loading && !summary && (
+        <div className="grid gap-4 md:grid-cols-4">
+          {[0, 1, 2, 3].map((n) => (
+            <Skeleton key={n} className="h-20 rounded-[10px]" />
+          ))}
+        </div>
+      )}
+
       {!loading && summary && summary.saleCount === 0 && (
-        <Card>
-          <CardContent className="text-muted-foreground py-8 text-center text-sm">
-            Belum ada transaksi pada {formatDate(range.from)} – {formatDate(range.to)}. Catat lewat Chatbot, form
-            Transaksi, atau impor CSV.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={ReceiptText}
+          title="Belum ada catatan penjualan"
+          description={`Tidak ada transaksi pada ${formatDate(range.from)} – ${formatDate(range.to)}. Catat lewat Chatbot, form Transaksi, atau impor CSV.`}
+        />
       )}
 
       {summary && summary.saleCount > 0 && (
         <>
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card>
-              <CardHeader><CardTitle>Transaksi</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-bold">{summary.saleCount}</CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>Omzet</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-bold">{formatRupiah(summary.total)}</CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>Item terjual</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-bold">{summary.itemCount}</CardContent>
-            </Card>
-            <Card>
-              <CardHeader><CardTitle>Rata-rata transaksi</CardTitle></CardHeader>
-              <CardContent className="text-2xl font-bold">{formatRupiah(summary.averageOrder)}</CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardContent className="pt-4">
+              <StatStrip
+                items={[
+                  { label: "Transaksi", value: summary.saleCount, hint: "nota tercatat" },
+                  { label: "Omzet", value: formatRupiah(summary.total), hint: "total masuk" },
+                  { label: "Item terjual", value: summary.itemCount, hint: "barang keluar" },
+                  { label: "Rata-rata transaksi", value: formatRupiah(summary.averageOrder), hint: "per nota" },
+                ]}
+              />
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Tren penjualan harian</CardTitle>
+              <CardTitle className="warung-title text-lg">Tren penjualan harian</CardTitle>
               <p className="text-muted-foreground text-xs">
                 {formatDate(range.from)} – {formatDate(range.to)}
               </p>
@@ -125,14 +141,14 @@ export default function OverviewPage() {
             <CardContent className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={summary.daily.map((d) => ({ ...d, value: Number(d.value) }))}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={(value: number) => `${Math.round(value / 1000)}rb`} tick={{ fontSize: 11 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
+                  <YAxis tickFormatter={(value: number) => `${Math.round(value / 1000)}rb`} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
                   <Tooltip
                     formatter={(value) => formatRupiah(Number(value))}
                     labelFormatter={(label) => formatDate(String(label))}
                   />
-                  <Line type="monotone" dataKey="value" name="Omzet" stroke="#2563eb" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="value" name="Omzet" stroke="var(--primary)" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
@@ -140,26 +156,26 @@ export default function OverviewPage() {
 
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
-              <CardHeader><CardTitle>Produk terlaris</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="warung-title text-lg">Produk terlaris</CardTitle></CardHeader>
               <CardContent>
                 <ul className="grid gap-1 text-sm">
-                  {summary.topProducts.map((p, i) => (
-                    <li key={i} className="flex justify-between gap-2">
+                  {summary.topProducts.map((p) => (
+                    <li key={p.name} className="flex justify-between gap-2 border-b border-dashed py-1 last:border-0">
                       <span className="truncate">{p.name} ({p.qty})</span>
-                      <span className="shrink-0">{formatRupiah(p.total)}</span>
+                      <span className="warung-price shrink-0">{formatRupiah(p.total)}</span>
                     </li>
                   ))}
                 </ul>
               </CardContent>
             </Card>
             <Card>
-              <CardHeader><CardTitle>Pelanggan teratas</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="warung-title text-lg">Pelanggan teratas</CardTitle></CardHeader>
               <CardContent>
                 <ul className="grid gap-1 text-sm">
-                  {summary.topCustomers.map((c, i) => (
-                    <li key={i} className="flex justify-between gap-2">
+                  {summary.topCustomers.map((c) => (
+                    <li key={c.name} className="flex justify-between gap-2 border-b border-dashed py-1 last:border-0">
                       <span className="truncate">{c.name} ({c.count}x)</span>
-                      <span className="shrink-0">{formatRupiah(c.total)}</span>
+                      <span className="warung-price shrink-0">{formatRupiah(c.total)}</span>
                     </li>
                   ))}
                 </ul>

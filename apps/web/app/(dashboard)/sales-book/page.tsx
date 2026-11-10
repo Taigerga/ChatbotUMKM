@@ -1,11 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { BookOpen } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { formatDateTime, formatRupiah } from "@/lib/format";
 import { DataPagination } from "@/components/data-pagination";
-import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import { Card, CardContent } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
+import { Skeleton } from "@workspace/ui/components/skeleton";
+import { SectionHeader } from "@/components/warung/section-header";
+import { EmptyState } from "@/components/warung/empty-state";
 
 type Line = {
   id: string;
@@ -62,11 +66,12 @@ export default function SalesBookPage() {
   return (
     <div className="grid gap-4 p-4 dash-stagger">
       <Card>
-        <CardHeader>
-          <CardTitle>Buku Penjualan ({total} baris)</CardTitle>
-          <p className="text-muted-foreground text-xs">Satu baris per item terjual, menggabungkan pelanggan, transaksi, dan produk.</p>
-        </CardHeader>
         <CardContent className="grid gap-3">
+          <SectionHeader
+            eyebrow="Buku penjualan"
+            title="Semua item terjual"
+            description={`${total} baris. Satu baris per item, menggabungkan pelanggan, transaksi, dan produk.`}
+          />
           <div className="flex flex-wrap items-end gap-2">
             <Input className="max-w-xs" placeholder="Cari kode, pelanggan, produk, SKU..." value={q} onChange={(e) => { setPage(1); setQ(e.target.value); }} />
             <label className="grid gap-1 text-xs">
@@ -94,9 +99,17 @@ export default function SalesBookPage() {
           {error && <p className="text-destructive text-sm">{error}</p>}
 
           {loading ? (
-            <p className="text-muted-foreground text-sm">Memuat...</p>
+            <div className="grid gap-2">
+              {[0, 1, 2, 3].map((n) => (
+                <Skeleton key={n} className="h-8 rounded-[10px]" />
+              ))}
+            </div>
           ) : items.length === 0 ? (
-            <p className="text-muted-foreground py-6 text-center text-sm">Belum ada baris penjualan pada filter ini.</p>
+            <EmptyState
+              icon={BookOpen}
+              title="Belum ada baris penjualan"
+              description="Coba longgarkan filter tanggal atau status. Catatan baru akan muncul di sini."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

@@ -10,6 +10,7 @@ import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { usePreferences, type TextSize, type Density } from "@/components/preferences-provider";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
+import { SectionHeader } from "@/components/warung/section-header";
 
 const TEXT_SIZES: { value: TextSize; label: string; sample: string }[] = [
   { value: "sm", label: "Kecil", sample: "Aa" },
@@ -142,10 +143,11 @@ export default function SettingsPage() {
       />
       <div className="grid gap-4 p-4 dash-stagger">
       <div className="dash-enter">
-        <h1 className="text-2xl font-semibold tracking-tight">Pengaturan</h1>
-        <p className="text-muted-foreground text-sm">
-          Sesuaikan tampilan dashboard dan kelola AI pribadi. Perubahan tampilan tersimpan di browser ini.
-        </p>
+        <SectionHeader
+          eyebrow="Preferensi"
+          title="Pengaturan"
+          description="Sesuaikan tampilan dashboard dan kelola AI pribadi. Perubahan tampilan tersimpan di browser ini."
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -170,7 +172,7 @@ export default function SettingsPage() {
                   key={option.value}
                   type="button"
                   onClick={() => setTheme(option.value)}
-                  className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-sm transition-all ${
+                  className={`flex flex-col items-center gap-2 rounded-[10px] border p-4 text-sm transition-all ${
                     active ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/40 hover:bg-muted/60"
                   }`}
                 >
@@ -199,7 +201,7 @@ export default function SettingsPage() {
                   key={option.value}
                   type="button"
                   onClick={() => setTextSize(option.value)}
-                  className={`flex flex-col items-center gap-2 rounded-xl border p-4 transition-all ${
+                  className={`flex flex-col items-center gap-2 rounded-[10px] border p-4 transition-all ${
                     active ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/40 hover:bg-muted/60"
                   }`}
                 >
@@ -230,7 +232,7 @@ export default function SettingsPage() {
                   key={option.value}
                   type="button"
                   onClick={() => setDensity(option.value)}
-                  className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm transition-all ${
+                  className={`flex items-center justify-between rounded-[10px] border px-4 py-3 text-sm transition-all ${
                     active ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/40 hover:bg-muted/60"
                   }`}
                 >
@@ -336,7 +338,7 @@ export default function SettingsPage() {
           </div>
 
           {aiError && <p className="text-destructive text-sm">{aiError}</p>}
-          {aiMessage && <p className="text-sm text-emerald-600">{aiMessage}</p>}
+          {aiMessage && <p className="text-chart-2 text-sm">{aiMessage}</p>}
 
           <div className="flex flex-wrap gap-2">
             <Button onClick={saveAiConfig} disabled={aiBusy || !canSave}>

@@ -36,8 +36,8 @@ export function MarketingNav() {
         className={cn(
           "pointer-events-auto flex w-full max-w-4xl items-center gap-2 rounded-full border px-3 py-2 transition-all duration-300",
           scrolled
-            ? "border-mk-line bg-mk-surface/85 shadow-[0_20px_60px_-40px_rgba(0,0,0,0.7)] backdrop-blur-xl"
-            : "border-transparent bg-mk-surface/40 backdrop-blur-md",
+            ? "border-mk-line bg-mk-surface shadow-sm"
+            : "border-transparent bg-transparent",
         )}
         aria-label="Navigasi utama"
       >

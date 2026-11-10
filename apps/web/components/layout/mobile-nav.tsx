@@ -3,8 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@workspace/ui/components/sheet";
 import { cn } from "@workspace/ui/lib/utils";
 import { NAV } from "./nav-items";
 
@@ -17,32 +23,28 @@ export function MobileNav() {
       <Button
         variant="ghost"
         size="sm"
-        aria-label={open ? "Tutup menu" : "Buka menu"}
-        aria-expanded={open}
-        aria-controls="mobile-nav"
-        onClick={() => setOpen((value) => !value)}
+        aria-label="Buka menu"
+        onClick={() => setOpen(true)}
       >
-        {open ? <X className="size-4" aria-hidden /> : <Menu className="size-4" aria-hidden />}
+        <Menu className="size-4" aria-hidden />
       </Button>
-      {open && (
-        <div
-          id="mobile-nav"
-          className="bg-background fixed inset-x-0 top-[57px] bottom-0 z-40 border-t p-3"
-          role="dialog"
-          aria-label="Navigasi utama"
-        >
-          <nav className="grid gap-1">
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="left" className="w-72 p-0">
+          <SheetHeader className="border-b px-4 py-3">
+            <SheetTitle className="font-display">Menu toko</SheetTitle>
+          </SheetHeader>
+          <nav className="grid gap-1 p-3" aria-label="Navigasi utama">
             {NAV.map((item) => {
               const Icon = item.icon;
+              const active = pathname === item.href;
               if (!item.ready) {
                 return (
                   <span
                     key={item.href}
-                    className="text-muted-foreground flex items-center gap-2 rounded-md px-2 py-2 text-sm opacity-60"
+                    className="text-muted-foreground flex items-center gap-2 rounded-[10px] px-3 py-2 text-sm opacity-60"
                   >
                     <Icon className="size-4" aria-hidden />
                     {item.label}
-                    <span className="ml-auto text-[10px] tracking-wide uppercase">soon</span>
                   </span>
                 );
               }
@@ -51,10 +53,10 @@ export function MobileNav() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setOpen(false)}
-                  aria-current={pathname === item.href ? "page" : undefined}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex items-center gap-2 rounded-md px-2 py-2 text-sm",
-                    pathname === item.href ? "bg-muted font-medium" : "hover:bg-muted/60",
+                    "flex items-center gap-3 rounded-[10px] px-3 py-2 text-sm",
+                    active ? "bg-primary font-medium text-primary-foreground" : "hover:bg-muted",
                   )}
                 >
                   <Icon className="size-4" aria-hidden />
@@ -63,8 +65,8 @@ export function MobileNav() {
               );
             })}
           </nav>
-        </div>
-      )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

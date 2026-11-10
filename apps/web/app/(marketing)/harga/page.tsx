@@ -144,7 +144,7 @@ export default function HargaPage() {
       </section>
 
       <section className="px-4 py-20">
-        <div className="mk-halo mk-card mx-auto max-w-4xl p-8 text-center sm:p-12">
+        <div className="mk-card mx-auto max-w-4xl p-8 text-center sm:p-12">
           <h2 className="mk-display text-[clamp(1.8rem,3.5vw,2.8rem)]">Masih ragu? Coba paket gratisnya dulu.</h2>
           <p className="text-mk-muted mx-auto mt-3 max-w-lg text-sm leading-relaxed">
             Tidak perlu kartu kredit. Kalau tidak cocok, berhenti tanpa kehilangan catatan yang sudah diekspor.

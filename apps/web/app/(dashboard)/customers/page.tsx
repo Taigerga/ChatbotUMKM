@@ -1,13 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Users } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { formatDateTime, formatRupiah } from "@/lib/format";
 import { DataPagination } from "@/components/data-pagination";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
+import { Skeleton } from "@workspace/ui/components/skeleton";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
+import { SectionHeader } from "@/components/warung/section-header";
+import { EmptyState } from "@/components/warung/empty-state";
 
 type Customer = { id: string; externalRef: string | null; name: string; phone: string | null; email: string | null; saleCount: number };
 type Sale = { id: string; code: string; occurredAt: string; total: string; status: string };
@@ -136,8 +140,12 @@ export default function CustomersPage() {
       />
       <div className="grid gap-4 p-4 dash-stagger">
       <Card>
-        <CardHeader><CardTitle>Pelanggan ({total})</CardTitle></CardHeader>
         <CardContent className="grid gap-3">
+          <SectionHeader
+            eyebrow="Buku pelanggan"
+            title="Pelanggan"
+            description={`${total} pelanggan tercatat. Semakin rutin membeli, semakin mudah diingat.`}
+          />
           <form className="grid gap-2 md:grid-cols-5" onSubmit={submit}>
             <Input placeholder="Referensi (otomatis jika kosong)" value={form.externalRef} onChange={(e) => setForm({ ...form, externalRef: e.target.value })} />
             <Input placeholder="Nama" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
@@ -157,9 +165,17 @@ export default function CustomersPage() {
           {error && <p className="text-destructive text-sm">{error}</p>}
 
           {loading ? (
-            <p className="text-muted-foreground text-sm">Memuat...</p>
+            <div className="grid gap-2">
+              {[0, 1, 2, 3].map((n) => (
+                <Skeleton key={n} className="h-8 rounded-[10px]" />
+              ))}
+            </div>
           ) : items.length === 0 ? (
-            <p className="text-muted-foreground py-6 text-center text-sm">Belum ada pelanggan.</p>
+            <EmptyState
+              icon={Users}
+              title="Belum ada pelanggan"
+              description="Catat pelanggan langganan lewat form di atas atau minta Chatbot menyimpannya saat transaksi."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

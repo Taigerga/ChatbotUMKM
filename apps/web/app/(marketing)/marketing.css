@@ -1,27 +1,27 @@
 /* Palet & animasi khusus halaman marketing. Dashboard tetap pakai token netral. */
 
 .mk {
-  --mk-cream: oklch(0.974 0.018 84);
-  --mk-surface: oklch(0.995 0.008 84);
-  --mk-ink: oklch(0.215 0.024 60);
-  --mk-muted: oklch(0.47 0.03 60);
-  --mk-brand: oklch(0.745 0.157 62);
-  --mk-brand-deep: oklch(0.545 0.145 45);
-  --mk-clay: oklch(0.7 0.088 32);
-  --mk-line: oklch(0.215 0.024 60 / 0.14);
+  --mk-cream: var(--background);
+  --mk-surface: var(--card);
+  --mk-ink: var(--foreground);
+  --mk-muted: var(--muted-foreground);
+  --mk-brand: var(--primary);
+  --mk-brand-deep: color-mix(in oklch, var(--primary) 78%, var(--foreground));
+  --mk-clay: var(--chart-3);
+  --mk-line: var(--border);
   background-color: var(--mk-cream);
   color: var(--mk-ink);
 }
 
 .dark .mk {
-  --mk-cream: oklch(0.185 0.016 60);
-  --mk-surface: oklch(0.225 0.018 60);
-  --mk-ink: oklch(0.955 0.012 84);
-  --mk-muted: oklch(0.74 0.02 70);
-  --mk-brand: oklch(0.79 0.155 68);
-  --mk-brand-deep: oklch(0.65 0.15 52);
-  --mk-clay: oklch(0.66 0.08 32);
-  --mk-line: oklch(0.955 0.012 84 / 0.16);
+  --mk-cream: var(--background);
+  --mk-surface: var(--card);
+  --mk-ink: var(--foreground);
+  --mk-muted: var(--muted-foreground);
+  --mk-brand: var(--primary);
+  --mk-brand-deep: color-mix(in oklch, var(--primary) 82%, var(--foreground));
+  --mk-clay: var(--chart-3);
+  --mk-line: var(--border);
 }
 
 /* Tekstur kertas halus, ditempel di belakang konten. */
@@ -33,12 +33,6 @@
   pointer-events: none;
   opacity: 0.35;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E");
-}
-
-.mk-halo {
-  background:
-    radial-gradient(60% 50% at 80% 0%, color-mix(in oklch, var(--mk-brand) 30%, transparent), transparent 70%),
-    radial-gradient(45% 40% at 10% 10%, color-mix(in oklch, var(--mk-clay) 26%, transparent), transparent 70%);
 }
 
 .mk-display {
@@ -79,8 +73,7 @@
 .mk-chip {
   border: 1px solid var(--mk-line);
   border-radius: 999px;
-  background: color-mix(in oklch, var(--mk-surface) 78%, transparent);
-  backdrop-filter: blur(10px);
+  background: var(--mk-surface);
 }
 
 .mk-link {
@@ -219,5 +212,5 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--mk-brand), var(--mk-brand-deep));
+  background: var(--mk-brand);
 }

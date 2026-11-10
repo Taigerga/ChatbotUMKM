@@ -1,10 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { History } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@workspace/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import { Card, CardContent } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
+import { SectionHeader } from "@/components/warung/section-header";
+import { EmptyState } from "@/components/warung/empty-state";
 
 type PreviewRow = { row: number; data: any; errors: { field: string; message: string }[]; warnings?: string[] };
 type Job = { id: string; entity: string; filename: string; status: string; rowCount: number; validCount: number; errorCount: number; createdAt: string };
@@ -105,13 +108,13 @@ export default function ImportsPage() {
   return (
     <div className="grid gap-4 p-4 dash-stagger">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
-          <CardTitle>Impor Data</CardTitle>
-          <Button size="sm" variant="outline" onClick={downloadTemplate}>
-            Unduh template
-          </Button>
-        </CardHeader>
         <CardContent className="grid gap-3">
+          <SectionHeader
+            eyebrow="Pindah data"
+            title="Impor data"
+            description="Unggah CSV atau Excel dari buku catatan lama. Semua baris diperiksa dulu sebelum disimpan."
+            action={<Button size="sm" variant="outline" onClick={downloadTemplate}>Unduh template</Button>}
+          />
           <div className="flex flex-wrap gap-2">
             <select className="rounded border px-2 py-1" value={entity} onChange={(e) => { setEntity(e.target.value); setPreview(null); setMapping({}); }}>
               {ENTITIES.map((e) => (
@@ -157,7 +160,7 @@ export default function ImportsPage() {
             </div>
           )}
 
-          {message && <p className="text-sm text-green-600">{message}</p>}
+          {message && <p className="text-chart-2 text-sm">{message}</p>}
 
           {preview && (
             <>
@@ -179,7 +182,7 @@ export default function ImportsPage() {
                         <td className="py-2">{r.row}</td>
                         <td>
                           {r.errors.length === 0 ? (
-                            <span className="text-green-600">Valid{r.warnings?.length ? ` (${r.warnings.join(", ")})` : ""}</span>
+                            <span className="text-chart-2">Valid{r.warnings?.length ? ` (${r.warnings.join(", ")})` : ""}</span>
                           ) : (
                             <span className="text-destructive">{r.errors.map((e) => e.message).join("; ")}</span>
                           )}
@@ -202,10 +205,10 @@ export default function ImportsPage() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Riwayat Impor</CardTitle></CardHeader>
-        <CardContent>
+        <CardContent className="grid gap-3">
+          <SectionHeader eyebrow="Riwayat" title="Riwayat impor" description="Berkas yang pernah diunggah dan hasil pemeriksaannya." />
           {jobs.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Belum ada riwayat impor.</p>
+            <EmptyState icon={History} title="Belum ada riwayat impor" description="Setelah Anda mengunggah berkas, hasilnya tercatat di sini." />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

@@ -106,10 +106,10 @@ export function ActionCard({
   const isCustomer = action.tool.includes("Customer");
 
   return (
-    <Card className="border-primary/30">
+    <Card className="warung-receipt border-primary/40">
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
-          <CardTitle className="text-sm">{TITLES[action.tool] ?? "Usulan aksi"}</CardTitle>
+          <CardTitle className="warung-title text-base">{TITLES[action.tool] ?? "Usulan aksi"}</CardTitle>
           {resolved && (
             <Badge variant={action.status === "executed" ? "default" : "secondary"}>
               {action.status === "executed" ? "Disimpan" : "Dibatalkan"}
@@ -213,13 +213,13 @@ export function ActionCard({
         )}
 
         {preview.warnings && preview.warnings.length > 0 && (
-          <ul className="text-amber-600 list-disc pl-4 text-xs">
+          <ul className="text-chart-3 list-disc pl-4 text-xs">
             {preview.warnings.map((warning) => (
               <li key={warning}>{warning}</li>
             ))}
           </ul>
         )}
-        {preview.warning && <p className="text-amber-600 text-xs">{preview.warning}</p>}
+        {preview.warning && <p className="text-chart-3 text-xs">{preview.warning}</p>}
 
         {action.result && (action.result.saleId || action.result.productId || action.result.customerId) && (
           <p className="text-muted-foreground text-xs">

@@ -1,13 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Package } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { formatRupiah } from "@/lib/format";
 import { DataPagination } from "@/components/data-pagination";
 import { Button } from "@workspace/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import { Card, CardContent } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
+import { Skeleton } from "@workspace/ui/components/skeleton";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
+import { SectionHeader } from "@/components/warung/section-header";
+import { EmptyState } from "@/components/warung/empty-state";
 
 type Product = { id: string; sku: string | null; name: string; category: string | null; price: string; cost: string | null };
 type FormState = { sku: string; name: string; category: string; price: string; cost: string };
@@ -139,8 +143,12 @@ export default function ProductsPage() {
       />
       <div className="grid gap-4 p-4 dash-stagger">
       <Card>
-        <CardHeader><CardTitle>Produk ({total})</CardTitle></CardHeader>
         <CardContent className="grid gap-3">
+          <SectionHeader
+            eyebrow="Katalog"
+            title="Produk"
+            description={`${total} produk tersimpan. Harga dipakai saat mencatat transaksi.`}
+          />
           <form className="grid gap-2 md:grid-cols-6" onSubmit={submit}>
             <Input placeholder="SKU (otomatis jika kosong)" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
             <Input placeholder="Nama" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
@@ -166,9 +174,17 @@ export default function ProductsPage() {
           {error && <p className="text-destructive text-sm">{error}</p>}
 
           {loading ? (
-            <p className="text-muted-foreground text-sm">Memuat...</p>
+            <div className="grid gap-2">
+              {[0, 1, 2, 3].map((n) => (
+                <Skeleton key={n} className="h-8 rounded-[10px]" />
+              ))}
+            </div>
           ) : items.length === 0 ? (
-            <p className="text-muted-foreground py-6 text-center text-sm">Belum ada produk. Tambah lewat form atau impor CSV.</p>
+            <EmptyState
+              icon={Package}
+              title="Belum ada produk"
+              description="Tambah lewat form di atas, minta Chatbot mencatat produk baru, atau impor CSV."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

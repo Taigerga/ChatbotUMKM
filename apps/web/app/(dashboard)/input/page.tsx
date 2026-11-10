@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { SaleEditor } from "@/components/sales/sale-editor";
-import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import { Card, CardContent } from "@workspace/ui/components/card";
+import { SectionHeader } from "@/components/warung/section-header";
 
 export default function QuickInputPage() {
   const [message, setMessage] = useState<string | null>(null);
@@ -11,14 +12,13 @@ export default function QuickInputPage() {
   return (
     <div className="grid gap-4 p-4 dash-stagger">
       <Card>
-        <CardHeader>
-          <CardTitle>Input Cepat</CardTitle>
-          <p className="text-muted-foreground text-xs">
-            Satu formulir untuk transaksi, pelanggan baru, dan produk baru. Semua tersimpan sekaligus.
-          </p>
-        </CardHeader>
         <CardContent className="grid gap-3">
-          {message && <p className="text-sm text-green-600">{message}</p>}
+          <SectionHeader
+            eyebrow="Catat cepat"
+            title="Input cepat"
+            description="Satu formulir untuk transaksi, pelanggan baru, dan produk baru. Semua tersimpan sekaligus."
+          />
+          {message && <p className="text-chart-2 text-sm">{message}</p>}
           <SaleEditor
             key={editorKey}
             onSaved={() => {

@@ -1,14 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ReceiptText } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { formatDateTime, formatRupiah } from "@/lib/format";
 import { DataPagination } from "@/components/data-pagination";
 import { SaleEditor, type SaleForEdit } from "@/components/sales/sale-editor";
 import { Button } from "@workspace/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import { Card, CardContent } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
+import { Skeleton } from "@workspace/ui/components/skeleton";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
+import { SectionHeader } from "@/components/warung/section-header";
+import { EmptyState } from "@/components/warung/empty-state";
 
 type SaleItem = { id: string; productId: string | null; description: string; qty: number; unitPrice: string; lineTotal: string };
 type Sale = {
@@ -98,11 +102,13 @@ export default function TransactionsPage() {
       />
       <div className="grid gap-4 p-4 dash-stagger">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle>Transaksi ({total})</CardTitle>
-            <Button size="sm" onClick={() => setEditing(null)}>Tambah transaksi</Button>
-          </CardHeader>
           <CardContent className="grid gap-3">
+            <SectionHeader
+              eyebrow="Nota toko"
+              title="Transaksi"
+              description={`${total} nota pada filter ini. Batalkan nota salah tanpa menghapus riwayat.`}
+              action={<Button size="sm" onClick={() => setEditing(null)}>Tambah transaksi</Button>}
+            />
             {editing !== undefined && (
               <SaleEditor
                 sale={editing}
@@ -143,9 +149,17 @@ export default function TransactionsPage() {
             {error && <p className="text-destructive text-sm">{error}</p>}
 
             {loading ? (
-              <p className="text-muted-foreground text-sm">Memuat...</p>
+              <div className="grid gap-2">
+                {[0, 1, 2, 3].map((n) => (
+                  <Skeleton key={n} className="h-8 rounded-[10px]" />
+                ))}
+              </div>
             ) : sales.length === 0 ? (
-              <p className="text-muted-foreground py-6 text-center text-sm">Belum ada transaksi pada filter ini.</p>
+              <EmptyState
+                icon={ReceiptText}
+                title="Belum ada transaksi di filter ini"
+                description="Ubah tanggal atau status, atau catat nota baru lewat tombol Tambah transaksi."
+              />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">

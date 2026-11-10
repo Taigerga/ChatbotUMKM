@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Pin, PinOff } from "lucide-react";
+import { Search, Pin, PinOff, X } from "lucide-react";
 import { formatDateTime } from "@/lib/format";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
@@ -43,7 +43,7 @@ export function HistoryPanel({
       <div
         key={conversation.id}
         className={cn(
-          "group flex items-start gap-1 rounded-md border px-2 py-2 text-sm",
+          "group flex items-start gap-1 rounded-[10px] border px-2 py-2 text-sm",
           activeId === conversation.id ? "bg-muted" : "hover:bg-muted/60",
         )}
       >
@@ -77,14 +77,14 @@ export function HistoryPanel({
           onClick={() => onDelete(conversation.id)}
           disabled={busy}
         >
-          ✕
+          <X className="size-3.5" aria-hidden />
         </button>
       </div>
     ));
   }
 
   return (
-    <div className="flex h-full flex-col gap-2 border-r bg-background p-3">
+    <div className="bg-sidebar flex h-full flex-col gap-2 border-r p-3">
       <Button size="sm" onClick={onNew} disabled={busy}>
         Percakapan baru
       </Button>

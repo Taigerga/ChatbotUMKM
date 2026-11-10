@@ -86,7 +86,6 @@ export default function LandingPage() {
     <main>
       {/* HERO */}
       <section className="relative overflow-hidden px-4 pt-32 pb-16 sm:pt-40 sm:pb-24">
-        <div className="mk-halo pointer-events-none absolute inset-x-0 -top-40 h-[520px] opacity-80 blur-2xl" aria-hidden />
         <div className="relative mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div className="mk-enter">
             <span className="mk-chip text-mk-muted inline-flex items-center gap-2 px-3 py-1.5 text-xs">
@@ -277,7 +276,7 @@ export default function LandingPage() {
 
       {/* CTA */}
       <section className="px-4 py-20 sm:py-28">
-        <div className="mk-halo mk-card mx-auto max-w-5xl overflow-hidden p-8 text-center sm:p-14">
+        <div className="mk-card mx-auto max-w-5xl overflow-hidden p-8 text-center sm:p-14">
           <p className="mk-eyebrow mk-reveal">Mulai hari ini</p>
           <h2 className="mk-display mk-reveal mx-auto mt-4 max-w-2xl text-[clamp(2rem,4.5vw,3.4rem)]">
             Toko kecil pun berhak punya data yang rapi.
