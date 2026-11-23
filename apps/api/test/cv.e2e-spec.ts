@@ -128,6 +128,16 @@ describe("CV API", () => {
     expect(list.body.items).toHaveLength(0);
   });
 
+  test("returns CV_UNAVAILABLE for malformed CV service payload", async () => {
+    stubFetch({ width: 10, height: 10, model_version: "test" });
+    let res = await agent.post("/api/v1/cv/scan").set("X-Tenant-Id", tenantId).attach("file", jpegBuffer, "rak.jpg").expect(503);
+    expect(res.body.code).toBe("CV_UNAVAILABLE");
+
+    stubFetch({ width: 10, height: 10, model_version: "test", detections: "bad" });
+    res = await agent.post("/api/v1/cv/scan").set("X-Tenant-Id", tenantId).attach("file", jpegBuffer, "rak.jpg").expect(503);
+    expect(res.body.code).toBe("CV_UNAVAILABLE");
+  });
+
   test("returns CV_UNAVAILABLE when service is down", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("ECONNREFUSED"));
     const res = await agent.post("/api/v1/cv/scan").set("X-Tenant-Id", tenantId).attach("file", jpegBuffer, "rak.jpg").expect(503);
