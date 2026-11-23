@@ -82,15 +82,34 @@ def test_clean_dataset_fixes_boxes_and_prevents_source_leakage(tmp_path):
     assert (config["train"], config["val"], config["test"]) == ("train.txt", "valid.txt", "test.txt")
 
 
-def test_clamps_box_that_extends_past_frame(tmp_path):
-    source = tmp_path / "src"
-    (source / "train" / "images").mkdir(parents=True)
-    (source / "train" / "labels").mkdir(parents=True)
-    (source / "data.yaml").write_text("nc: 1\nnames: ['saus-a']\n", encoding="utf-8")
-    (source / "train" / "images" / "edge.jpg").write_bytes(b"x")
-    (source / "train" / "labels" / "edge.txt").write_text("0 0.875 0.875 0.5 0.5\n", encoding="utf-8")
+def make_single_label_source(root: Path, label: str) -> Path:
+    root.mkdir(parents=True, exist_ok=True)
+    (root / "data.yaml").write_text("nc: 2\nnames: ['saus-a', 'mie-b']\n", encoding="utf-8")
+    (root / "train" / "images").mkdir(parents=True)
+    (root / "train" / "labels").mkdir(parents=True)
+    (root / "train" / "images" / "edge.jpg").write_bytes(b"x")
+    (root / "train" / "labels" / "edge.txt").write_text(label, encoding="utf-8")
+    return root
+
+
+def test_literal_clamp_preserves_in_range_boxes(tmp_path):
+    source = make_single_label_source(tmp_path / "src", "0 0.875 0.875 0.5 0.5\n")
+
+    stats = clean_dataset(source, tmp_path / "clean")
+
+    assert stats["clamped"] == 0
+    assert read_labels(tmp_path / "clean") == [(0.875, 0.875, 0.5, 0.5)]
+
+
+def test_clamps_out_of_range_coords_and_ignores_tolerance_noise(tmp_path):
+    label = "0 1.4 -0.2 1.5 0.3\n1 1.0000000000000002 0.5 0.2 0.2\n"
+    source = make_single_label_source(tmp_path / "src", label)
 
     stats = clean_dataset(source, tmp_path / "clean")
 
     assert stats["clamped"] == 1
-    assert read_labels(tmp_path / "clean") == [(0.75, 0.75, 0.5, 0.5)]
+    assert stats["dropped_zero"] == 0
+    assert read_labels(tmp_path / "clean") == [
+        (1.0, 0.0, 1.0, 0.3),
+        (1.0, 0.5, 0.2, 0.2),
+    ]

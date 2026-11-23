@@ -13,6 +13,7 @@ import yaml
 
 SPLITS = ("train", "valid", "test")
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
+CLAMP_TOL = 1e-9
 
 
 def source_key(stem: str) -> str:
@@ -48,15 +49,10 @@ def _clean_label(source: Path, target: Path, stats: dict) -> None:
                 values = [float(part) for part in parts[1:]]
             except ValueError:
                 continue
-            cx, cy, width, height = values
-            width = min(1.0, max(0.0, width))
-            height = min(1.0, max(0.0, height))
-            cx = min(1.0 - width / 2, max(width / 2, cx))
-            cy = min(1.0 - height / 2, max(height / 2, cy))
-            cleaned = [cx, cy, width, height]
-            if cleaned != values:
+            if any(value < -CLAMP_TOL or value > 1.0 + CLAMP_TOL for value in values):
                 stats["clamped"] += 1
-            if width <= 0 or height <= 0:
+            cleaned = [min(1.0, max(0.0, value)) for value in values]
+            if cleaned[2] <= 0 or cleaned[3] <= 0:
                 stats["dropped_zero"] += 1
                 continue
             kept.append(f"{class_id} " + " ".join(str(value) for value in cleaned))
