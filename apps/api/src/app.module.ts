@@ -15,6 +15,7 @@ import { CustomersModule } from './modules/customers/customers.module.js';
 import { OverviewModule } from './modules/overview/overview.module.js';
 import { ImportsModule } from './modules/imports/imports.module.js';
 import { MlModule } from './modules/ml/ml.module.js';
+import { CvModule } from './modules/cv/cv.module.js';
 import { AiConfigModule } from './modules/ai-config/ai-config.module.js';
 
 @Module({
@@ -32,6 +33,7 @@ import { AiConfigModule } from './modules/ai-config/ai-config.module.js';
     OverviewModule,
     ImportsModule,
     MlModule,
+    CvModule,
     AiConfigModule,
   ],
   controllers: [AppController],

@@ -19,6 +19,8 @@ export type Env = {
   AI_CONFIG_ENCRYPTION_KEY?: string;
   ML_SERVICE_URL: string;
   ML_INTERNAL_TOKEN: string;
+  CV_SERVICE_URL: string;
+  CV_INTERNAL_TOKEN: string;
 };
 
 const REQUIRED = ["DATABASE_URL", "JWT_SECRET", "WEB_ORIGIN"] as const;
@@ -52,5 +54,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     AI_CONFIG_ENCRYPTION_KEY: source.AI_CONFIG_ENCRYPTION_KEY,
     ML_SERVICE_URL: source.ML_SERVICE_URL ?? "http://127.0.0.1:8001",
     ML_INTERNAL_TOKEN: source.ML_INTERNAL_TOKEN ?? "",
+    CV_SERVICE_URL: source.CV_SERVICE_URL ?? "http://127.0.0.1:8002",
+    CV_INTERNAL_TOKEN: source.CV_INTERNAL_TOKEN ?? "",
   };
 }
