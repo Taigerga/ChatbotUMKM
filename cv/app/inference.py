@@ -1,5 +1,6 @@
 import io
 import json
+import threading
 from pathlib import Path
 
 from PIL import Image
@@ -10,15 +11,18 @@ from app.schemas import Detection, ScanResponse
 _ROOT = Path(__file__).resolve().parent.parent
 
 _model = None
+_model_lock = threading.Lock()
 
 
 def load_model():
     global _model
     if _model is None:
-        from ultralytics import YOLO  # loaded on first scan, not at import
+        with _model_lock:
+            if _model is None:
+                from ultralytics import YOLO  # loaded on first scan, not at import
 
-        artifact = _ROOT / settings.CV_ARTIFACT_DIR / "cv-best.pt"
-        _model = YOLO(str(artifact))
+                artifact = _ROOT / settings.CV_ARTIFACT_DIR / "cv-best.pt"
+                _model = YOLO(str(artifact))
     return _model
 
 

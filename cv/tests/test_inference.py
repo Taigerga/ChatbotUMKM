@@ -1,5 +1,6 @@
 import io
 import sys
+import threading
 from types import SimpleNamespace
 
 import numpy as np
@@ -92,6 +93,49 @@ def test_load_model_loads_once_from_artifact_and_caches(tmp_path, monkeypatch):
 
     assert first is load_model()
     assert loaded_paths == [str(tmp_path / "cv-best.pt")]
+
+
+def test_load_model_guards_first_load_race(tmp_path, monkeypatch):
+    started = threading.Event()
+    release = threading.Event()
+    loaded = []
+
+    class BlockingYOLO:
+        def __init__(self, path):
+            loaded.append(path)
+            started.set()
+            if not release.wait(timeout=5):
+                raise TimeoutError("model load never released")
+
+    monkeypatch.setitem(sys.modules, "ultralytics", SimpleNamespace(YOLO=BlockingYOLO))
+    monkeypatch.setenv("CV_ARTIFACT_DIR", str(tmp_path))
+    monkeypatch.setattr("app.inference._model", None, raising=False)
+
+    results = []
+    errors = []
+
+    def load():
+        try:
+            results.append(load_model())
+        except BaseException as exc:
+            errors.append(exc)
+
+    first = threading.Thread(target=load)
+    second = threading.Thread(target=load)
+    first.start()
+    try:
+        assert started.wait(timeout=5)
+        second.start()
+        second.join(timeout=0.1)
+        assert second.is_alive()
+    finally:
+        release.set()
+        first.join(timeout=5)
+        second.join(timeout=5)
+
+    assert not errors
+    assert loaded == [str(tmp_path / "cv-best.pt")]
+    assert len(results) == 2 and results[0] is results[1]
 
 
 def test_model_ready_tracks_cached_model(monkeypatch):

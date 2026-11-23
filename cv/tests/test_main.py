@@ -3,7 +3,9 @@ import io
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
+from starlette.concurrency import run_in_threadpool
 
+import app.main as main
 from app.main import app
 from app.schemas import ScanResponse
 
@@ -16,6 +18,12 @@ def client():
 def make_jpeg_bytes(width: int, height: int) -> bytes:
     buffer = io.BytesIO()
     Image.new("RGB", (width, height)).save(buffer, format="JPEG")
+    return buffer.getvalue()
+
+
+def make_gif_bytes(width: int, height: int) -> bytes:
+    buffer = io.BytesIO()
+    Image.new("RGB", (width, height)).save(buffer, format="GIF")
     return buffer.getvalue()
 
 
@@ -69,6 +77,46 @@ def test_scan_rejects_corrupt_image_bytes(client, monkeypatch):
 
     assert r.status_code == 400
     assert r.json()["code"] == "INVALID_IMAGE"
+
+
+def test_scan_rejects_allowed_mime_with_disallowed_pil_format(client, monkeypatch):
+    monkeypatch.setenv("CV_INTERNAL_TOKEN", "")
+    calls = []
+
+    def fake_predict(data):
+        calls.append(data)
+        return ScanResponse(width=1, height=1, detections=[], model_version="test")
+
+    monkeypatch.setattr("app.main.predict_image", fake_predict)
+    r = client.post("/scan", files={"file": ("a.jpg", make_gif_bytes(4, 4), "image/jpeg")})
+
+    assert calls == []
+    assert r.status_code == 400
+    assert r.json()["code"] == "INVALID_IMAGE"
+
+
+def test_scan_offloads_inference_to_threadpool(client, monkeypatch):
+    monkeypatch.setenv("CV_INTERNAL_TOKEN", "")
+    calls = []
+    real_offload = run_in_threadpool
+
+    async def recording_offload(func, *args, **kwargs):
+        calls.append((func, args))
+        return await real_offload(func, *args, **kwargs)
+
+    def fake_predict(data):
+        return ScanResponse(width=1, height=1, detections=[], model_version="test")
+
+    monkeypatch.setattr(main, "run_in_threadpool", recording_offload, raising=False)
+    monkeypatch.setattr(main, "predict_image", fake_predict)
+    payload = make_jpeg_bytes(2, 2)
+
+    r = client.post("/scan", files={"file": ("a.jpg", payload, "image/jpeg")})
+
+    assert r.status_code == 200
+    assert len(calls) == 1
+    assert calls[0][0] is fake_predict
+    assert calls[0][1] == (payload,)
 
 
 def test_scan_requires_token(client, monkeypatch):
