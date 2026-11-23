@@ -30,7 +30,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     ...init,
     credentials: "include",
     headers: {
-      ...(init.body ? { "content-type": "application/json" } : {}),
+      ...(init.body && !(init.body instanceof FormData) ? { "content-type": "application/json" } : {}),
       ...(tenantId ? { "x-tenant-id": tenantId } : {}),
       ...init.headers,
     },

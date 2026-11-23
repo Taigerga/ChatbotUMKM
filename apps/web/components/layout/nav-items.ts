@@ -1,4 +1,4 @@
-import { BarChart3, BookOpen, Bot, Boxes, FileUp, LayoutDashboard, PlusCircle, Receipt, Settings, Users } from "lucide-react";
+import { BarChart3, BookOpen, Bot, Boxes, FileUp, LayoutDashboard, PlusCircle, Receipt, ScanLine, Settings, Users } from "lucide-react";
 
 export const NAV = [
   { href: "/chat", label: "Chatbot", icon: Bot, ready: true },
@@ -6,6 +6,7 @@ export const NAV = [
   { href: "/overview", label: "Ringkasan", icon: LayoutDashboard, ready: true },
   { href: "/transactions", label: "Transaksi", icon: Receipt, ready: true },
   { href: "/sales-book", label: "Buku Penjualan", icon: BookOpen, ready: true },
+  { href: "/cv-katalog", label: "Katalog Visual", icon: ScanLine, ready: true },
   { href: "/products", label: "Produk", icon: Boxes, ready: true },
   { href: "/customers", label: "Pelanggan", icon: Users, ready: true },
   { href: "/imports", label: "Impor Data", icon: FileUp, ready: true },
