@@ -251,6 +251,7 @@ model CvScan {
 model CvDetection {
   id              String  @id @default(cuid())
   scanId          String
+  tenantId        String
   classId         Int
   className       String
   confidence      Float
@@ -262,6 +263,7 @@ model CvDetection {
   scan            CvScan  @relation(fields: [scanId], references: [id], onDelete: Cascade)
 
   @@index([scanId])
+  @@index([tenantId, scanId])
 }
 
 model CvProductMapping {

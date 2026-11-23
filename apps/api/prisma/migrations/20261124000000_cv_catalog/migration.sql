@@ -17,6 +17,7 @@ CREATE TABLE `CvScan` (
 CREATE TABLE `CvDetection` (
     `id` VARCHAR(191) NOT NULL,
     `scanId` VARCHAR(191) NOT NULL,
+    `tenantId` VARCHAR(191) NOT NULL,
     `classId` INTEGER NOT NULL,
     `className` VARCHAR(191) NOT NULL,
     `confidence` DOUBLE NOT NULL,
@@ -27,6 +28,7 @@ CREATE TABLE `CvDetection` (
     `mappedProductId` VARCHAR(191) NULL,
 
     INDEX `CvDetection_scanId_idx`(`scanId`),
+    INDEX `CvDetection_tenantId_scanId_idx`(`tenantId`, `scanId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
