@@ -233,3 +233,45 @@ model UserAiConfig {
 
   @@index([userId])
 }
+
+model CvScan {
+  id           String        @id @default(cuid())
+  tenantId     String
+  createdBy    String
+  fileName     String
+  width        Int
+  height       Int
+  modelVersion String
+  createdAt    DateTime      @default(now())
+  detections   CvDetection[]
+
+  @@index([tenantId, createdAt])
+}
+
+model CvDetection {
+  id              String  @id @default(cuid())
+  scanId          String
+  classId         Int
+  className       String
+  confidence      Float
+  xmin            Float
+  ymin            Float
+  xmax            Float
+  ymax            Float
+  mappedProductId String?
+  scan            CvScan  @relation(fields: [scanId], references: [id], onDelete: Cascade)
+
+  @@index([scanId])
+}
+
+model CvProductMapping {
+  id        String   @id @default(cuid())
+  tenantId  String
+  classId   Int
+  className String
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@unique([tenantId, classId])
+}
