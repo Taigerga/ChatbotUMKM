@@ -9,7 +9,7 @@ from PIL import Image
 from starlette.concurrency import run_in_threadpool
 
 from app.config import settings
-from app.inference import model_ready, predict_image
+from app.inference import ModelNotReadyError, model_ready, predict_image
 
 app = FastAPI(title="CV Service UMKM", version="0.1")
 
@@ -36,10 +36,13 @@ def health() -> dict[str, object]:
 
 
 @app.get("/classes", dependencies=[Depends(_auth)])
-def classes() -> dict[str, object]:
+def classes():
     path = _ROOT / settings.CV_CLEAN_DATA_DIR / "data.yaml"
-    data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    return {"nc": data["nc"], "names": data["names"]}
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        return {"nc": data["nc"], "names": data["names"]}
+    except (OSError, KeyError):
+        return _error("DATA_NOT_READY", status.HTTP_503_SERVICE_UNAVAILABLE)
 
 
 @app.post("/scan", dependencies=[Depends(_auth)])
@@ -62,5 +65,7 @@ async def scan(file: UploadFile = File(...)):
 
     try:
         return await run_in_threadpool(predict_image, data)
+    except ModelNotReadyError:
+        return _error("MODEL_NOT_READY", status.HTTP_503_SERVICE_UNAVAILABLE)
     except Exception:
         return _error("INFERENCE_FAILED", status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -1,4 +1,6 @@
 import io
+import sys
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -136,3 +138,33 @@ def test_scan_maps_inference_failure_to_500(client, monkeypatch):
 
     assert r.status_code == 500
     assert r.json()["code"] == "INFERENCE_FAILED"
+
+
+def test_classes_reports_data_not_ready_for_missing_or_incomplete_yaml(client, tmp_path, monkeypatch):
+    monkeypatch.setenv("CV_INTERNAL_TOKEN", "")
+    monkeypatch.setenv("CV_CLEAN_DATA_DIR", str(tmp_path))
+
+    missing = client.get("/classes")
+    assert missing.status_code == 503
+    assert missing.json()["code"] == "DATA_NOT_READY"
+
+    (tmp_path / "data.yaml").write_text("nc: 2\n", encoding="utf-8")
+    incomplete = client.get("/classes")
+    assert incomplete.status_code == 503
+    assert incomplete.json()["code"] == "DATA_NOT_READY"
+
+
+def test_scan_reports_model_not_ready_when_artifact_load_fails(client, tmp_path, monkeypatch):
+    monkeypatch.setenv("CV_INTERNAL_TOKEN", "")
+    monkeypatch.setenv("CV_ARTIFACT_DIR", str(tmp_path))
+    monkeypatch.setattr("app.inference._model", None, raising=False)
+
+    class BrokenYOLO:
+        def __init__(self, path):
+            raise OSError(f"missing weights: {path}")
+
+    monkeypatch.setitem(sys.modules, "ultralytics", SimpleNamespace(YOLO=BrokenYOLO))
+    r = client.post("/scan", files={"file": ("a.jpg", make_jpeg_bytes(2, 2), "image/jpeg")})
+
+    assert r.status_code == 503
+    assert r.json()["code"] == "MODEL_NOT_READY"

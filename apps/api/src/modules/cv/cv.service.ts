@@ -21,6 +21,8 @@ type ClassPayload = { nc: number; names: string[] };
 type ScanRow = CvScan & { detections: CvDetection[] };
 
 const isNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
+const isNonNegativeInt = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0;
+const intOrDefault = (value: unknown, fallback: number): number => (isNonNegativeInt(value) ? value : fallback);
 const isClassPayload = (value: unknown): value is ClassPayload =>
   Boolean(value && typeof value === "object" && isNumber((value as ClassPayload).nc) && Array.isArray((value as ClassPayload).names) && (value as ClassPayload).names.every((name) => typeof name === "string"));
 
@@ -60,7 +62,7 @@ export class CvService {
       data: {
         tenantId,
         createdBy: userId,
-        fileName: file.originalname,
+        fileName: file.originalname.slice(0, 191),
         width: payload.width,
         height: payload.height,
         modelVersion: payload.model_version,
@@ -83,9 +85,9 @@ export class CvService {
     return toScanResponse(scan);
   }
 
-  async listScans(tenantId: string, limit = 20, offset = 0) {
-    const take = Math.min(Math.max(limit, 1), 100);
-    const skip = Math.max(offset, 0);
+  async listScans(tenantId: string, limit?: number, offset?: number) {
+    const take = Math.min(Math.max(intOrDefault(limit, 20), 1), 100);
+    const skip = intOrDefault(offset, 0);
     const [rows, total] = await Promise.all([
       this.prisma.cvScan.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take, skip, include: { detections: true } }),
       this.prisma.cvScan.count({ where: { tenantId } }),
@@ -115,6 +117,9 @@ export class CvService {
   }
 
   async deleteMapping(tenantId: string, classId: number) {
+    if (!isNonNegativeInt(classId)) {
+      throw new BadRequestException({ code: "INVALID_CLASS_ID", message: "classId harus bilangan bulat non-negatif" });
+    }
     await this.prisma.cvProductMapping.deleteMany({ where: { tenantId, classId } });
     return { ok: true as const };
   }
@@ -124,6 +129,7 @@ export class CvService {
       const response = await fetch(`${this.env.CV_SERVICE_URL}${path}`, {
         ...init,
         headers: { "x-cv-token": this.env.CV_INTERNAL_TOKEN },
+        signal: AbortSignal.timeout(this.env.CV_TIMEOUT_MS),
       });
       if (!response.ok) throw new Error(`CV service error ${response.status}`);
       const payload: unknown = await response.json();
@@ -143,7 +149,6 @@ function toScanResponse(scan: ScanRow) {
     width: scan.width,
     height: scan.height,
     modelVersion: scan.modelVersion,
-    model_version: scan.modelVersion,
     createdAt: scan.createdAt,
     detections: scan.detections.map((d) => ({
       id: d.id,

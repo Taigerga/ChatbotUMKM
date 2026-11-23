@@ -91,8 +91,23 @@ Batasan akurasi: 1.114 kelas, 1.090 di antaranya punya <100 sampel. Deteksi kela
 
 Status verifikasi worktree ini:
 
-- PASS: `python -m pytest -v` di `cv/` (22 test); `npm run typecheck --workspace web`; `npm run lint --workspace web`; `npm run build --workspace api`; `npm run test --workspace api` (13 test); `npx vitest run --config ./vitest.config.e2e.ts test/cv.e2e-spec.ts` (8 test).
-- E2E penuh: 31/32 test lulus; satu kegagalan pra-adanya di `test/seed.e2e-spec.ts` (`expected 53820 to be 5`), tidak terkait CV.
-- BLOCKED: `python -m pytest -v` di `ml/` — 6 error saat koleksi (`ModuleNotFoundError: No module named 'joblib'` / `'pandas'`).
+- PASS: `python -m pytest -q` di `cv/` (24 test); `npm run typecheck --workspace web`; `npm run lint --workspace web`; `npm run build --workspace api`; `npm run test --workspace api` (13 test); `npm run test:e2e --workspace api -- cv.e2e-spec.ts` (13 test).
+- E2E penuh: 36/37 test lulus; satu kegagalan pra-adanya di `test/seed.e2e-spec.ts` (`expected 53820 to be 5`), tidak terkait CV.
+- BLOCKED: `python -m pytest -v` di `ml/` — 14 passed, 2 failed saat koleksi karena `data/raw/ecommerce_sales_customer_analytics_150k.csv` (gitignored) tidak ada di worktree. Bukan kegagalan import `joblib`/`pandas`.
 - BLOCKED: smoke training — `ModuleNotFoundError: No module named 'ultralytics'`; artefak tidak terbentuk. `uvicorn` juga belum terpasang.
 - Manual: deteksi langsung di UI `/cv-katalog` memakai foto rak nyata dan respons CV sungguhan belum terverifikasi (belum ada service/weights). Ulangi setelah artefak tersedia.
+
+### Deploy/CI seller CV
+
+Fitur ini tidak berfungsi tanpa dataset bersih dan weights. Pipeline deploy/CI wajib melakukan langkah berikut (atau menyuplai artefak yang sudah jadi):
+
+1. Migrasi API: `cd apps/api && npx prisma generate && npx prisma migrate deploy`. Pastikan `20261124000000_cv_catalog` ikut terpasang (migrasi ini sudah ada di base `d113ed2`). Untuk CI dari commit base lain: checkout `<base>`, jalankan `npx prisma migrate deploy` di direktori migrasi base itu, lalu terapkan migrasi CV di atasnya.
+2. Siapkan dataset sumber di `data/computervision/PhantomStock.v1i.yolo26`, lalu jalankan perintah cleaning di atas sampai `cv/data/cleaned/data.yaml` dan split_txt ada.
+3. Jalankan training sampai `cv/artifacts/cv-best.pt` + `metadata.json` terbentuk, atau salin keduanya beserta `data/cleaned/` dari pipeline terpercaya.
+4. Set `CV_SERVICE_URL`, `CV_INTERNAL_TOKEN`, `CV_TIMEOUT_MS` (default `60000` ms) di API dan `CV_INTERNAL_TOKEN` yang sama di service CV.
+
+Tanpa langkah 2–3, `GET /classes` mengembalikan 503 `DATA_NOT_READY` dan `POST /scan` mengembalikan 503 `MODEL_NOT_READY`. Tanpa langkah 1, rute CV gagal di database.
+
+### Pemblokir produksi
+
+- Keputusan lisensi Ultralytics (AGPL vs Enterprise) belum final. Jangan aktifkan fitur CV di produksi sampai owner memutuskan lisensi.

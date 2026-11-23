@@ -60,9 +60,9 @@ export function CatalogAssistant() {
   const [scan, setScan] = useState<Scan | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [mappings, setMappings] = useState<Mapping[]>([]);
-  const [selected, setSelected] = useState<Record<number, string>>({});
+  const [selected, setSelected] = useState<Record<string, string>>({});
   const [classCount, setClassCount] = useState<number | null>(null);
-  const [savedClassId, setSavedClassId] = useState<number | null>(null);
+  const [savedDetectionId, setSavedDetectionId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -92,7 +92,7 @@ export function CatalogAssistant() {
     setFile(event.target.files?.[0] ?? null);
     setScan(null);
     setSelected({});
-    setSavedClassId(null);
+    setSavedDetectionId(null);
     setError(null);
   }
 
@@ -101,7 +101,8 @@ export function CatalogAssistant() {
     setBusy(true);
     setError(null);
     setScan(null);
-    setSavedClassId(null);
+    setSelected({});
+    setSavedDetectionId(null);
     try {
       const form = new FormData();
       form.append("file", file);
@@ -115,7 +116,7 @@ export function CatalogAssistant() {
   }
 
   function productIdFor(detection: Detection) {
-    return selected[detection.classId] ?? detection.mappedProductId ?? mappings.find((mapping) => mapping.classId === detection.classId)?.productId ?? "";
+    return selected[detection.id] ?? detection.mappedProductId ?? mappings.find((mapping) => mapping.classId === detection.classId)?.productId ?? "";
   }
 
   async function save(detection: Detection) {
@@ -123,7 +124,7 @@ export function CatalogAssistant() {
     if (!productId) return;
     setBusy(true);
     setError(null);
-    setSavedClassId(null);
+    setSavedDetectionId(null);
     try {
       await apiFetch("/cv/mappings", {
         method: "PUT",
@@ -133,7 +134,7 @@ export function CatalogAssistant() {
         ...previous.filter((mapping) => mapping.classId !== detection.classId),
         { classId: detection.classId, className: detection.className, productId },
       ]);
-      setSavedClassId(detection.classId);
+      setSavedDetectionId(detection.id);
     } catch (err) {
       setError(messageOf(err, "Gagal menyimpan mapping."));
     } finally {
@@ -213,8 +214,8 @@ export function CatalogAssistant() {
                             aria-label={`Produk untuk ${detection.className}`}
                             value={productIdFor(detection)}
                             onChange={(event) => {
-                              setSelected((previous) => ({ ...previous, [detection.classId]: event.target.value }));
-                              setSavedClassId(null);
+                              setSelected((previous) => ({ ...previous, [detection.id]: event.target.value }));
+                              setSavedDetectionId(null);
                             }}
                           >
                             <option value="">Pilih produk…</option>
@@ -227,7 +228,7 @@ export function CatalogAssistant() {
                       </td>
                       <td className="text-right whitespace-nowrap">
                         <Button size="sm" onClick={() => save(detection)} disabled={busy || !productIdFor(detection)}>Simpan</Button>
-                        {savedClassId === detection.classId && <span className="text-chart-2 ml-2 text-xs">Tersimpan</span>}
+                        {savedDetectionId === detection.id && <span className="text-chart-2 ml-2 text-xs">Tersimpan</span>}
                       </td>
                     </tr>
                   ))}

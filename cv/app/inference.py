@@ -14,15 +14,22 @@ _model = None
 _model_lock = threading.Lock()
 
 
+class ModelNotReadyError(RuntimeError):
+    """Model artifact missing or failed to load."""
+
+
 def load_model():
     global _model
     if _model is None:
         with _model_lock:
             if _model is None:
-                from ultralytics import YOLO  # loaded on first scan, not at import
+                try:
+                    from ultralytics import YOLO  # loaded on first scan, not at import
 
-                artifact = _ROOT / settings.CV_ARTIFACT_DIR / "cv-best.pt"
-                _model = YOLO(str(artifact))
+                    artifact = _ROOT / settings.CV_ARTIFACT_DIR / "cv-best.pt"
+                    _model = YOLO(str(artifact))
+                except Exception as exc:
+                    raise ModelNotReadyError("Model CV belum tersedia") from exc
     return _model
 
 

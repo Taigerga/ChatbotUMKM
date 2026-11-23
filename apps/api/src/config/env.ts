@@ -21,6 +21,7 @@ export type Env = {
   ML_INTERNAL_TOKEN: string;
   CV_SERVICE_URL: string;
   CV_INTERNAL_TOKEN: string;
+  CV_TIMEOUT_MS: number;
 };
 
 const REQUIRED = ["DATABASE_URL", "JWT_SECRET", "WEB_ORIGIN"] as const;
@@ -56,5 +57,6 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     ML_INTERNAL_TOKEN: source.ML_INTERNAL_TOKEN ?? "",
     CV_SERVICE_URL: source.CV_SERVICE_URL ?? "http://127.0.0.1:8002",
     CV_INTERNAL_TOKEN: source.CV_INTERNAL_TOKEN ?? "",
+    CV_TIMEOUT_MS: positiveInt(source.CV_TIMEOUT_MS, 60_000),
   };
 }
