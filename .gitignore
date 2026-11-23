@@ -50,7 +50,12 @@ next-env.d.ts
 data/raw/
 data/interim/
 data/processed/
+data/computervision/
 !data/**/README.md
+
+# service CV: dataset hasil cleaning & artefak training
+cv/data/cleaned/
+cv/artifacts/
 
 # artefak model & venv python
 ml/artifacts/
