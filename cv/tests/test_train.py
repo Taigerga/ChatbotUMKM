@@ -74,6 +74,20 @@ def test_train_model_writes_artifact_and_metadata(tmp_path, monkeypatch):
     assert meta["trained_at"]
 
 
+def test_train_model_normalizes_dict_style_names_in_metadata(tmp_path, monkeypatch):
+    monkeypatch.setattr("scripts.train.YOLO", fake_yolo_factory(tmp_path))
+    data_yaml = tmp_path / "data.yaml"
+    data_yaml.write_text(
+        "nc: 3\nnames:\n  10: class-ten\n  2: class-two\n  0: class-zero\n",
+        encoding="utf-8",
+    )
+
+    out = train_model(data_yaml, tmp_path / "art", epochs=1)
+
+    meta = json.loads((out.parent / "metadata.json").read_text(encoding="utf-8"))
+    assert meta["names"] == ["class-zero", "class-two", "class-ten"]
+
+
 def test_train_model_uses_yolo26n_base_and_requested_training_config(tmp_path, monkeypatch):
     calls = []
     monkeypatch.setattr("scripts.train.YOLO", fake_yolo_factory(tmp_path, calls))

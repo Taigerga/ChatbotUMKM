@@ -33,6 +33,12 @@ def _metrics(results: Any) -> dict:
     return dict(values) if isinstance(values, dict) else {}
 
 
+def _class_names(names: Any) -> list:
+    if isinstance(names, dict):
+        return [names[key] for key in sorted(names, key=lambda key: int(key))]
+    return list(names)
+
+
 def _copy_subset(data_yaml: Path, limit_images: int, temp_root: Path) -> Path:
     config = yaml.safe_load(data_yaml.read_text(encoding="utf-8"))
     target = temp_root / "data"
@@ -111,7 +117,7 @@ def train_model(
         "model_version": BASE_MODEL,
         "trained_at": datetime.now(timezone.utc).isoformat(),
         "nc": config["nc"],
-        "names": list(config["names"]),
+        "names": _class_names(config["names"]),
         "metrics": _metrics(results),
     }
     (output_dir / "metadata.json").write_text(
