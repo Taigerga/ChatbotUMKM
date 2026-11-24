@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import tempfile
 from contextlib import contextmanager
@@ -101,17 +102,29 @@ def train_model(
     limit_images: int | None = None,
 ) -> Path:
     data_yaml = Path(data_yaml)
-    output_dir = Path(output_dir)
+    output_dir = Path(output_dir).resolve()
     config = yaml.safe_load(data_yaml.read_text(encoding="utf-8"))
 
     with _training_data(data_yaml, limit_images) as training_yaml:
-        model = _yolo_class()(BASE_MODEL)
-        results = model.train(data=str(training_yaml), epochs=epochs, imgsz=imgsz)
-
-    output_dir.mkdir(parents=True, exist_ok=True)
-    best = Path(model.trainer.save_dir) / "weights" / "best.pt"
-    artifact = output_dir / "cv-best.pt"
-    shutil.copy2(best, artifact)
+        # Ultralytics resolves the dataset path and image lists against cwd.
+        training_yaml_abs = training_yaml.resolve()
+        train_config = yaml.safe_load(training_yaml.read_text(encoding="utf-8"))
+        train_config["path"] = str(training_yaml_abs.parent)
+        training_yaml.write_text(
+            yaml.safe_dump(train_config, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+        previous_cwd = Path.cwd()
+        os.chdir(training_yaml_abs.parent)
+        try:
+            model = _yolo_class()(BASE_MODEL)
+            results = model.train(data=str(training_yaml_abs), epochs=epochs, imgsz=imgsz)
+            best = Path(model.trainer.save_dir) / "weights" / "best.pt"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            artifact = output_dir / "cv-best.pt"
+            shutil.copy2(best, artifact)
+        finally:
+            os.chdir(previous_cwd)
 
     metadata = {
         "model_version": BASE_MODEL,

@@ -85,7 +85,15 @@ python -m scripts.train --data data/cleaned/data.yaml --artifacts artifacts --ep
 python -m scripts.train --data data/cleaned/data.yaml --artifacts artifacts --epochs 1 --limit-images 200
 ```
 
-Artefak: `cv/artifacts/cv-best.pt` dan `cv/artifacts/metadata.json` (`model_version`, `nc`, `names`, metrik). Keduanya belum ada di worktree ini.
+Artefak: `cv/artifacts/cv-best.pt` dan `cv/artifacts/metadata.json` (`model_version`, `nc`, `names`, metrik). Keduanya gitignored; pada mesin dev ini sudah terbentuk dari smoke run (`--epochs 1 --limit-images 200`) dan training penuh 10 epoch di GPU.
+
+Hasil training penuh 10 epoch: `mAP50=0.00112`, `mAP50-95=0.000574` (2.232 gambar validasi, 26.346 instance). Dengan `conf=0.25` praktis tidak ada deteksi; pada `conf=0.01` sekitar 7 dari 10 gambar validasi menghasilkan box. Ini artefak demo, bukan model produksi. Untuk demo lokal, jalankan CV service dengan override:
+
+```powershell
+$env:CV_CONF='0.01'; python -m uvicorn app.main:app --host 127.0.0.1 --port 8002
+```
+
+Kode default tetap `0.25`; jangan pakai override ini di produksi.
 
 Batasan akurasi: 1.114 kelas, 1.090 di antaranya punya <100 sampel. Deteksi kelas langka confidence rendah dan tetap menjadi usulan; Penjual wajib mengonfirmasi/memetakan manual. "box terdeteksi" BUKAN stok — jangan dipakai untuk auto-update stok, harga, atau SKU. Domain gap antara foto rak nyata dan dataset perlu diverifikasi manual.
 
@@ -94,8 +102,10 @@ Status verifikasi worktree ini:
 - PASS: `python -m pytest -q` di `cv/` (24 test); `npm run typecheck --workspace web`; `npm run lint --workspace web`; `npm run build --workspace api`; `npm run test --workspace api` (13 test); `npm run test:e2e --workspace api -- cv.e2e-spec.ts` (13 test).
 - E2E penuh: 36/37 test lulus; satu kegagalan pra-adanya di `test/seed.e2e-spec.ts` (`expected 53820 to be 5`), tidak terkait CV.
 - BLOCKED: `python -m pytest -v` di `ml/` — 14 passed, 2 failed saat koleksi karena `data/raw/ecommerce_sales_customer_analytics_150k.csv` (gitignored) tidak ada di worktree. Bukan kegagalan import `joblib`/`pandas`.
-- BLOCKED: smoke training — `ModuleNotFoundError: No module named 'ultralytics'`; artefak tidak terbentuk. `uvicorn` juga belum terpasang.
-- Manual: deteksi langsung di UI `/cv-katalog` memakai foto rak nyata dan respons CV sungguhan belum terverifikasi (belum ada service/weights). Ulangi setelah artefak tersedia.
+- PASS: `ultralytics` + `torch` terpasang di mesin dev (torch `2.14.1+cu130`, CUDA aktif pada RTX 5060). Smoke training dan training penuh berjalan.
+- PASS: `POST /api/v1/cv/scan` (akun demo, `x-tenant-id`) mengembalikan 201 dan menyimpan scan; dengan artefak 10 epoch + `CV_CONF=0.01` mengembalikan 3 deteksi dan tersimpan.
+- BLOCKED: kualitas deteksi. Training 10 epoch pada 1.114 kelas long-tail belum layak produksi. Perlu training jauh lebih lama atau strategi kelas (mis. subset kelas frekuensi tinggi) sebelum dipakai nyata.
+- Manual: deteksi langsung di UI `/cv-katalog` memakai foto rak nyata belum diverifikasi; uji memakai gambar dataset sudah.
 
 ### Deploy/CI seller CV
 

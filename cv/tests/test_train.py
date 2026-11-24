@@ -99,7 +99,7 @@ def test_train_model_uses_yolo26n_base_and_requested_training_config(tmp_path, m
     assert len(calls) == 1
     assert calls[0].weights == "yolo26n.pt"
     assert calls[0].train_kwargs == {
-        "data": str(data_yaml),
+        "data": str(data_yaml.resolve()),
         "epochs": 7,
         "imgsz": 320,
     }
@@ -114,8 +114,9 @@ def test_limit_images_copies_subset_and_rewrites_yaml(tmp_path, monkeypatch):
     train_model(data_yaml, tmp_path / "art", epochs=1, limit_images=2)
 
     snapshot = calls[0].snapshot
-    assert yaml.safe_load(snapshot["data.yaml"]) == {
-        "path": ".",
+    subset_config = yaml.safe_load(snapshot["data.yaml"])
+    assert Path(subset_config.pop("path")).is_absolute()
+    assert subset_config == {
         "train": "train.txt",
         "val": "valid.txt",
         "test": "test.txt",

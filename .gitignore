@@ -56,6 +56,9 @@ data/computervision/
 # service CV: dataset hasil cleaning & artefak training
 cv/data/cleaned/
 cv/artifacts/
+cv/runs/
+cv/yolo26n.pt
+yolo26n.pt
 
 # artefak model & venv python
 ml/artifacts/
